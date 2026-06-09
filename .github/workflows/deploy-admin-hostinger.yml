@@ -32,6 +32,9 @@ jobs:
         working-directory: admin
         run: npm run build
 
+      - name: Verify API build output
+        run: ls -la admin/dist/api
+
       - name: Deploy admin files
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
@@ -47,6 +50,22 @@ jobs:
             api/**/*
             uploads/**
             uploads/**/*
+
+      - name: Install FTP state reset tool
+        run: sudo apt-get update && sudo apt-get install -y lftp
+
+      - name: Reset API FTP deploy state
+        env:
+          FTP_SERVER: ${{ secrets.HOSTINGER_FTP_SERVER }}
+          FTP_USERNAME: ${{ secrets.HOSTINGER_FTP_USERNAME }}
+          FTP_PASSWORD: ${{ secrets.HOSTINGER_FTP_PASSWORD }}
+        run: |
+          lftp -u "$FTP_USERNAME","$FTP_PASSWORD" "$FTP_SERVER" <<'LFTP'
+          set ssl:verify-certificate no
+          cd /api
+          rm -f .ftp-deploy-sync-state-api.json
+          bye
+          LFTP
 
       - name: Deploy admin API files
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
