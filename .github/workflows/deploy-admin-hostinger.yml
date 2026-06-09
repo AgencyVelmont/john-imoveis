@@ -40,8 +40,8 @@ jobs:
           username: ${{ secrets.HOSTINGER_FTP_USERNAME }}
           password: ${{ secrets.HOSTINGER_FTP_PASSWORD }}
           local-dir: admin/dist/
-          server-dir: /public_html/admin/
-          state-name: .ftp-deploy-sync-state-admin-public-html.json
+          server-dir: /domains/felipecorretor.com.br/public_html/admin/
+          state-name: .ftp-deploy-sync-state-admin-domain-public-html.json
           exclude: |
             **/.git*
             **/.git*/**
@@ -57,8 +57,8 @@ jobs:
           username: ${{ secrets.HOSTINGER_FTP_USERNAME }}
           password: ${{ secrets.HOSTINGER_FTP_PASSWORD }}
           local-dir: admin/public/api/
-          server-dir: /public_html/api/
-          state-name: .ftp-deploy-sync-state-api-public-html.json
+          server-dir: /domains/felipecorretor.com.br/public_html/api/
+          state-name: .ftp-deploy-sync-state-api-domain-public-html.json
           exclude: |
             **/.git*
             **/.git*/**
@@ -68,3 +68,24 @@ jobs:
             **/.htaccess*
             uploads/**
             uploads/**/*
+
+      - name: Verify deployed upload flow
+        run: |
+          api_status="$(curl -sS -o /dev/null -w "%{http_code}" -X OPTIONS \
+            -H "Origin: https://admin.felipecorretor.com.br" \
+            -H "Access-Control-Request-Method: POST" \
+            -H "Access-Control-Request-Headers: Authorization, Content-Type" \
+            https://felipecorretor.com.br/api/upload-imovel.php)"
+          test "$api_status" = "204"
+
+          admin_html="$(curl -fsSL https://admin.felipecorretor.com.br/)"
+          main_asset="$(printf "%s" "$admin_html" | grep -o 'assets/index-[^"]*\.js' | head -n 1)"
+          test -n "$main_asset"
+
+          main_js="$(curl -fsSL "https://admin.felipecorretor.com.br/$main_asset")"
+          property_asset="$(printf "%s" "$main_js" | grep -o 'assets/property-images-[^"]*\.js' | head -n 1)"
+          test -n "$property_asset"
+
+          property_js="$(curl -fsSL "https://admin.felipecorretor.com.br/$property_asset")"
+          printf "%s" "$property_js" | grep -q "upload-imovel.php"
+          ! printf "%s" "$property_js" | grep -q "storage.from"

@@ -1,7 +1,8 @@
 import { supabase } from "@/lib/supabase";
 
-const HOSTINGER_UPLOAD_ENDPOINT = "/api/upload-imovel.php";
-const HOSTINGER_DELETE_ENDPOINT = "/api/delete-imovel-image.php";
+const HOSTINGER_API_BASE_URL = "https://felipecorretor.com.br/api";
+const HOSTINGER_UPLOAD_ENDPOINT = `${HOSTINGER_API_BASE_URL}/upload-imovel.php`;
+const HOSTINGER_DELETE_ENDPOINT = `${HOSTINGER_API_BASE_URL}/delete-imovel-image.php`;
 
 const MAX_IMAGE_DIMENSION = 1920;
 const TARGET_IMAGE_BYTES = 900 * 1024;

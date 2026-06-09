@@ -2,7 +2,34 @@
 
 const IMOVEL_IMAGE_MAX_BYTES = 12 * 1024 * 1024;
 
+function send_cors_headers(): void {
+  $origin = (string) ($_SERVER['HTTP_ORIGIN'] ?? '');
+  $allowedOrigins = [
+    'https://admin.felipecorretor.com.br',
+    'https://felipecorretor.com.br',
+  ];
+
+  if (in_array($origin, $allowedOrigins, true)) {
+    header('Access-Control-Allow-Origin: ' . $origin);
+    header('Vary: Origin');
+  }
+
+  header('Access-Control-Allow-Methods: POST, OPTIONS');
+  header('Access-Control-Allow-Headers: Authorization, Content-Type');
+  header('Access-Control-Max-Age: 86400');
+}
+
+function handle_cors_preflight(): void {
+  send_cors_headers();
+
+  if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(204);
+    exit;
+  }
+}
+
 function json_response(int $status, array $payload): void {
+  send_cors_headers();
   http_response_code($status);
   header('Content-Type: application/json; charset=utf-8');
   echo json_encode($payload);

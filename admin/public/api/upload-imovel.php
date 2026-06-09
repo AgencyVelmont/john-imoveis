@@ -2,6 +2,7 @@
 
 require_once __DIR__ . '/_imovel-image-utils.php';
 
+handle_cors_preflight();
 require_post();
 require_authenticated_user();
 
