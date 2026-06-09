@@ -31,7 +31,15 @@ jobs:
 
       - name: Build admin
         working-directory: admin
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
         run: npm run build
+
+      - name: Verify admin build config
+        run: |
+          ! grep -R "Configure VITE_SUPABASE_URL" admin/dist/assets/index-*.js
+          ! grep -R "const zh=void 0" admin/dist/assets/index-*.js
 
       - name: Deploy admin files
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
