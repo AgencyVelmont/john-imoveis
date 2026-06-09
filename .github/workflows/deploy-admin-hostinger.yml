@@ -40,7 +40,8 @@ jobs:
           username: ${{ secrets.HOSTINGER_FTP_USERNAME }}
           password: ${{ secrets.HOSTINGER_FTP_PASSWORD }}
           local-dir: admin/dist/
-          server-dir: /admin/
+          server-dir: /public_html/admin/
+          state-name: .ftp-deploy-sync-state-admin-public-html.json
           exclude: |
             **/.git*
             **/.git*/**
@@ -56,8 +57,8 @@ jobs:
           username: ${{ secrets.HOSTINGER_FTP_USERNAME }}
           password: ${{ secrets.HOSTINGER_FTP_PASSWORD }}
           local-dir: admin/public/api/
-          server-dir: /api/
-          state-name: .ftp-deploy-sync-state-api-v2.json
+          server-dir: /public_html/api/
+          state-name: .ftp-deploy-sync-state-api-public-html.json
           exclude: |
             **/.git*
             **/.git*/**
