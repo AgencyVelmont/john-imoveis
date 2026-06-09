@@ -61,6 +61,20 @@ function accepted_image_types(): array {
   ];
 }
 
+function accepted_image_mimes(): array {
+  return [
+    'image/jpeg',
+    'image/pjpeg',
+    'image/png',
+    'image/webp',
+    'image/avif',
+    'image/heic',
+    'image/heif',
+    'image/heic-sequence',
+    'image/heif-sequence',
+  ];
+}
+
 function sanitize_property_id(string $propertyId): string {
   $propertyId = trim($propertyId);
 
@@ -123,8 +137,7 @@ function validate_uploaded_image(array $file): array {
 
   $browserMime = strtolower((string) ($file['type'] ?? ''));
   $detectedMime = detect_file_mime((string) $file['tmp_name']);
-  $allowedMimes = array_unique(array_values($acceptedTypes));
-  $allowedMimes[] = 'image/pjpeg';
+  $allowedMimes = accepted_image_mimes();
 
   foreach ([$browserMime, $detectedMime] as $mime) {
     if ($mime === '' || $mime === 'application/octet-stream') {
@@ -139,6 +152,8 @@ function validate_uploaded_image(array $file): array {
   return [
     'extension' => $extension === 'jpeg' ? 'jpg' : $extension,
     'baseName' => sanitize_base_name($originalName),
+    'originalName' => $originalName,
+    'size' => $size,
   ];
 }
 
@@ -153,16 +168,16 @@ function public_base_url(): string {
     return rtrim($configuredUrl, '/');
   }
 
-  $https = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ||
-    (($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https');
-  $scheme = $https ? 'https' : 'http';
-  $host = $_SERVER['HTTP_HOST'] ?? 'felipecorretor.com.br';
-
-  return $scheme . '://' . $host;
+  return 'https://felipecorretor.com.br';
 }
 
 function relative_upload_path(string $propertyId, string $fileName): string {
   return 'uploads/imoveis/' . $propertyId . '/' . $fileName;
+}
+
+function unique_image_file_name(array $validated): string {
+  return date('YmdHis') . '-' . bin2hex(random_bytes(8)) . '-' .
+    $validated['baseName'] . '.' . $validated['extension'];
 }
 
 function resolve_upload_path_from_input(string $path, string $url): string {

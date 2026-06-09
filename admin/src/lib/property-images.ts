@@ -1,6 +1,5 @@
 import { supabase } from "@/lib/supabase";
 
-export const PROPERTY_IMAGES_BUCKET = "property-images";
 const HOSTINGER_UPLOAD_ENDPOINT = "/api/upload-imovel.php";
 const HOSTINGER_DELETE_ENDPOINT = "/api/delete-imovel-image.php";
 
@@ -162,19 +161,9 @@ export async function deletePropertyImages(images: PropertyImage[]) {
 
   const imageIds = images.map((image) => image.id);
   const hostedImages = images.filter(isHostingerImage);
-  const storageImages = images.filter((image) => !isHostingerImage(image));
 
   for (const image of hostedImages) {
     await deleteImageFromHostinger(image);
-  }
-
-  if (storageImages.length > 0) {
-    const storagePaths = storageImages.map((image) => image.storage_path);
-    const { error: storageError } = await supabase.storage
-      .from(PROPERTY_IMAGES_BUCKET)
-      .remove(storagePaths);
-
-    if (storageError) throw storageError;
   }
 
   const { error: deleteError } = await supabase.from("property_images").delete().in("id", imageIds);
@@ -229,18 +218,23 @@ async function uploadImageToHostinger(propertyId: string, file: File) {
   });
   const payload = (await response.json().catch(() => null)) as {
     ok?: boolean;
-    url?: string;
-    path?: string;
+    publicUrl?: string;
+    storagePath?: string;
+    images?: Array<{
+      publicUrl?: string;
+      storagePath?: string;
+    }>;
     message?: string;
   } | null;
+  const uploadedImage = payload?.images?.[0] ?? payload;
 
-  if (!response.ok || !payload?.ok || !payload.url || !payload.path) {
+  if (!response.ok || !payload?.ok || !uploadedImage?.publicUrl || !uploadedImage.storagePath) {
     throw new Error(payload?.message || "Erro ao enviar imagem.");
   }
 
   return {
-    url: payload.url,
-    path: payload.path,
+    url: uploadedImage.publicUrl,
+    path: uploadedImage.storagePath,
   };
 }
 

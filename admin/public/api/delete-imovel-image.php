@@ -22,4 +22,7 @@ if (is_file($targetPath) && !unlink($targetPath)) {
   json_response(500, ['ok' => false, 'message' => 'Não foi possível excluir a imagem']);
 }
 
-json_response(200, ['ok' => true]);
+json_response(200, [
+  'ok' => true,
+  'storagePath' => $relativePath,
+]);
