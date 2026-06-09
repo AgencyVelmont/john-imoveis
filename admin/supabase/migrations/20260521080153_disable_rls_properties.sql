@@ -1,0 +1,1 @@
+alter table properties disable row level security;

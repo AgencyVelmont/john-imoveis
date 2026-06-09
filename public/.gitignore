@@ -10,12 +10,6 @@ lerna-debug.log*
 node_modules
 dist
 dist-ssr
-.env
-.env.*
-.htaccess
-uploads/
-*.pem
-*.key
 .output
 .vinxi
 .tanstack/**
@@ -25,7 +19,6 @@ uploads/
 # Wrangler / Cloudflare
 .wrangler/
 .dev.vars
-**/supabase/.temp/
 
 # Editor directories and files
 .vscode/*

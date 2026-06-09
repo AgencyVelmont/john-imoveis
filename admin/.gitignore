@@ -11,11 +11,7 @@ node_modules
 dist
 dist-ssr
 .env
-.env.*
-.htaccess
-uploads/
-*.pem
-*.key
+.env.local
 .output
 .vinxi
 .tanstack/**
@@ -25,7 +21,7 @@ uploads/
 # Wrangler / Cloudflare
 .wrangler/
 .dev.vars
-**/supabase/.temp/
+supabase/.temp
 
 # Editor directories and files
 .vscode/*
