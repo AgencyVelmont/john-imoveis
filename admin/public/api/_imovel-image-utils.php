@@ -1,6 +1,8 @@
 <?php
 
 const IMOVEL_IMAGE_MAX_BYTES = 12 * 1024 * 1024;
+const SUPABASE_PUBLIC_URL_FALLBACK = 'https://bxzdfhbgkzgnlvdrgoal.supabase.co';
+const SUPABASE_PUBLISHABLE_KEY_FALLBACK = 'sb_publishable_iec5AmOnY7iPGceyA453lQ_mFkCSO_k';
 
 function send_cors_headers(): void {
   $origin = (string) ($_SERVER['HTTP_ORIGIN'] ?? '');
@@ -43,8 +45,8 @@ function require_post(): void {
 }
 
 function require_authenticated_user(): void {
-  $supabaseUrl = getenv('SUPABASE_URL') ?: getenv('VITE_SUPABASE_URL') ?: '';
-  $supabaseAnonKey = getenv('SUPABASE_ANON_KEY') ?: getenv('VITE_SUPABASE_ANON_KEY') ?: '';
+  $supabaseUrl = getenv('SUPABASE_URL') ?: getenv('VITE_SUPABASE_URL') ?: SUPABASE_PUBLIC_URL_FALLBACK;
+  $supabaseAnonKey = getenv('SUPABASE_ANON_KEY') ?: getenv('VITE_SUPABASE_ANON_KEY') ?: SUPABASE_PUBLISHABLE_KEY_FALLBACK;
   $authorization = $_SERVER['HTTP_AUTHORIZATION'] ?? '';
 
   if ($supabaseUrl === '' || $supabaseAnonKey === '') {
