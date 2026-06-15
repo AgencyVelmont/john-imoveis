@@ -1,4 +1,4 @@
-import { BedDouble, Bath, Car, Maximize, MessageCircle, MapPin } from "lucide-react";
+import { BedDouble, Bath, Car, Home, Maximize, MessageCircle, MapPin } from "lucide-react";
 import { Property, formatPrice } from "@/data/properties";
 import { WHATSAPP_LINK } from "@/lib/site";
 
@@ -35,6 +35,11 @@ export function PropertyCard({ property }: { property: Property }) {
         <div className="my-2 flex flex-wrap gap-4 border-y border-border py-4 text-[12px] text-[oklch(0.45_0.01_90)]">
           {property.bedrooms > 0 && (
             <span className="flex items-center gap-1.5"><BedDouble className="h-3.5 w-3.5 text-navy-light" /> {property.bedrooms} dorm</span>
+          )}
+          {property.suites > 0 && (
+            <span className="flex items-center gap-1.5">
+              <Home className="h-3.5 w-3.5 text-navy-light" /> {property.suites} {property.suites === 1 ? "suíte" : "suítes"}
+            </span>
           )}
           <span className="flex items-center gap-1.5"><Bath className="h-3.5 w-3.5 text-navy-light" /> {property.bathrooms} banh</span>
           <span className="flex items-center gap-1.5"><Car className="h-3.5 w-3.5 text-navy-light" /> {property.parking} vagas</span>

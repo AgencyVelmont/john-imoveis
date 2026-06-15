@@ -4,6 +4,7 @@ import {
   BedDouble,
   Bath,
   Car,
+  Home,
   Maximize,
   MessageCircle,
   MapPin,
@@ -228,6 +229,13 @@ export function PropertyCard({ property }: { property: Property }) {
           {property.bedrooms > 0 && (
             <span className="flex items-center gap-1.5">
               <BedDouble className="h-3.5 w-3.5 text-navy-light" /> {property.bedrooms} dorm
+            </span>
+          )}
+
+          {property.suites > 0 && (
+            <span className="flex items-center gap-1.5">
+              <Home className="h-3.5 w-3.5 text-navy-light" /> {property.suites}{" "}
+              {property.suites === 1 ? "suíte" : "suítes"}
             </span>
           )}
 
