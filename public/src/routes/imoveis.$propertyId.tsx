@@ -344,11 +344,11 @@ function PropertyDetailPage() {
                       <button
                         key={image.id}
                         type="button"
-                        onClick={() => setActiveImage(index)}
+                        onClick={() => openLightbox(index)}
                         className={`aspect-[4/3] overflow-hidden border bg-secondary transition-colors ${
                           activeImage === index ? "border-gold" : "border-transparent"
                         }`}
-                        aria-label={`Ver foto ${index + 1}`}
+                        aria-label={`Abrir foto ${index + 1} em tela cheia`}
                       >
                         <img
                           src={image.url}
