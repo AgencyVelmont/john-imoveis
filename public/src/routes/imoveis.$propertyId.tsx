@@ -1,12 +1,14 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import {
   ArrowLeft,
   Bath,
   BedDouble,
   Building2,
   Car,
+  ChevronLeft,
+  ChevronRight,
   CheckCircle2,
   Check,
   Home,
@@ -18,6 +20,7 @@ import {
   MessageCircle,
   Ruler,
   Tag,
+  X,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { SiteLayout } from "@/components/site/SiteLayout";
@@ -49,6 +52,7 @@ export const Route = createFileRoute("/imoveis/$propertyId")({
 function PropertyDetailPage() {
   const { propertyId } = Route.useParams();
   const [activeImage, setActiveImage] = useState(0);
+  const [lightboxImage, setLightboxImage] = useState<number | null>(null);
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
@@ -80,6 +84,38 @@ function PropertyDetailPage() {
           : [],
     [property],
   );
+  const hasMultipleImages = images.length > 1;
+
+  const openLightbox = useCallback((index: number) => {
+    setActiveImage(index);
+    setLightboxImage(index);
+  }, []);
+
+  const closeLightbox = useCallback(() => {
+    setLightboxImage(null);
+  }, []);
+
+  const showPreviousImage = useCallback(() => {
+    if (!hasMultipleImages) return;
+
+    setLightboxImage((current) => {
+      const nextIndex =
+        current === null ? activeImage : current === 0 ? images.length - 1 : current - 1;
+      setActiveImage(nextIndex);
+      return nextIndex;
+    });
+  }, [activeImage, hasMultipleImages, images.length]);
+
+  const showNextImage = useCallback(() => {
+    if (!hasMultipleImages) return;
+
+    setLightboxImage((current) => {
+      const nextIndex =
+        current === null ? activeImage : current === images.length - 1 ? 0 : current + 1;
+      setActiveImage(nextIndex);
+      return nextIndex;
+    });
+  }, [activeImage, hasMultipleImages, images.length]);
 
   const similarProperties = useMemo(() => {
     if (!property) return [];
@@ -144,7 +180,26 @@ function PropertyDetailPage() {
 
   useEffect(() => {
     setActiveImage(0);
+    setLightboxImage(null);
   }, [propertyId]);
+
+  useEffect(() => {
+    if (lightboxImage === null) return;
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") closeLightbox();
+      if (event.key === "ArrowLeft") showPreviousImage();
+      if (event.key === "ArrowRight") showNextImage();
+    };
+
+    document.body.style.overflow = "hidden";
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.body.style.overflow = "";
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [closeLightbox, lightboxImage, showNextImage, showPreviousImage]);
 
   const handleWhatsAppClick = () => {
     if (property?.id) {
@@ -265,19 +320,24 @@ function PropertyDetailPage() {
             <>
               <div className="grid gap-10 lg:grid-cols-[minmax(0,1.32fr)_minmax(340px,0.68fr)]">
                 <div>
-                  <div className="relative aspect-[16/10] overflow-hidden bg-secondary shadow-elegant-sm">
+                  <button
+                    type="button"
+                    onClick={() => openLightbox(activeImage)}
+                    className="relative block aspect-[16/10] w-full overflow-hidden bg-secondary shadow-elegant-sm"
+                    aria-label={`Abrir foto ${activeImage + 1} em tela cheia`}
+                  >
                     <img
                       src={images[activeImage]?.url || property.image}
                       alt={property.title}
                       decoding="async"
                       fetchPriority="high"
-                      className="h-full w-full object-cover"
+                      className="h-full w-full object-contain"
                     />
                     <div className="absolute bottom-4 left-4 inline-flex items-center gap-2 bg-navy/85 px-4 py-2 text-[12px] uppercase tracking-[0.1em] text-white backdrop-blur">
                       <Images className="h-4 w-4 text-gold-light" />
                       {activeImage + 1} de {images.length} fotos
                     </div>
-                  </div>
+                  </button>
 
                   <div className="mt-4 grid grid-cols-3 gap-3 md:grid-cols-6">
                     {images.map((image, index) => (
@@ -295,7 +355,7 @@ function PropertyDetailPage() {
                           alt={`${property.title} - foto ${index + 1}`}
                           loading="lazy"
                           decoding="async"
-                          className="h-full w-full object-cover"
+                          className="h-full w-full object-contain"
                         />
                       </button>
                     ))}
@@ -458,6 +518,56 @@ function PropertyDetailPage() {
           )}
         </div>
       </section>
+
+      {property && lightboxImage !== null && images[lightboxImage] && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/95 p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Visualizador de fotos"
+        >
+          <button
+            type="button"
+            onClick={closeLightbox}
+            className="absolute right-4 top-4 z-10 flex h-11 w-11 items-center justify-center rounded-full bg-white/10 text-white transition-colors hover:bg-white/20"
+            aria-label="Fechar galeria"
+          >
+            <X className="h-5 w-5" />
+          </button>
+
+          {hasMultipleImages && (
+            <button
+              type="button"
+              onClick={showPreviousImage}
+              className="absolute left-3 top-1/2 z-10 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-white/10 text-white transition-colors hover:bg-white/20 md:left-6"
+              aria-label="Foto anterior"
+            >
+              <ChevronLeft className="h-6 w-6" />
+            </button>
+          )}
+
+          <img
+            src={images[lightboxImage].url}
+            alt={`${property.title} - foto ${lightboxImage + 1}`}
+            className="max-h-[92vh] max-w-[92vw] object-contain"
+          />
+
+          {hasMultipleImages && (
+            <button
+              type="button"
+              onClick={showNextImage}
+              className="absolute right-3 top-1/2 z-10 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-white/10 text-white transition-colors hover:bg-white/20 md:right-6"
+              aria-label="Próxima foto"
+            >
+              <ChevronRight className="h-6 w-6" />
+            </button>
+          )}
+
+          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-white/10 px-4 py-2 text-[12px] uppercase tracking-[0.1em] text-white">
+            {lightboxImage + 1} de {images.length}
+          </div>
+        </div>
+      )}
     </SiteLayout>
   );
 }

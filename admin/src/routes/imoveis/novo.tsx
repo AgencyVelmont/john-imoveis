@@ -55,8 +55,8 @@ function NovoImovel() {
       return;
     }
 
-    if (status === "publicado" && newImages.length < 6) {
-      setErrorMessage("Para publicar, selecione pelo menos 6 fotos do imóvel.");
+    if (status === "publicado" && newImages.length === 0) {
+      setErrorMessage("Para publicar, selecione pelo menos 1 foto do imóvel.");
       return;
     }
 

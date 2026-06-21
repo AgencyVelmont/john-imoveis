@@ -4,8 +4,10 @@ import {
   existingImageKey,
   isAcceptedPropertyImageFile,
   localImageKey,
+  MAX_PROPERTY_IMAGES,
   optimizePropertyImage,
   PROPERTY_IMAGE_ACCEPT,
+  PROPERTY_IMAGE_LIMIT_MESSAGE,
   type PropertyImage,
 } from "@/lib/property-images";
 
@@ -73,6 +75,8 @@ export function PropertyImageUploader({
   const addFiles = async (fileList: FileList | File[]) => {
     const files = Array.from(fileList);
     const validFiles = files.filter(isAcceptedPropertyImageFile);
+    const currentTotal = existingImages.length + newImages.length;
+    const availableSlots = Math.max(0, MAX_PROPERTY_IMAGES - currentTotal);
 
     if (validFiles.length !== files.length) {
       setMessage("Use apenas imagens JPG, PNG, WebP, AVIF, HEIC ou HEIF.");
@@ -82,12 +86,25 @@ export function PropertyImageUploader({
 
     if (validFiles.length === 0) return;
 
+    if (availableSlots <= 0) {
+      setMessage(PROPERTY_IMAGE_LIMIT_MESSAGE);
+      return;
+    }
+
+    const filesToAdd = validFiles.slice(0, availableSlots);
+
+    const exceededLimit = validFiles.length > availableSlots;
+
+    if (exceededLimit) {
+      setMessage(PROPERTY_IMAGE_LIMIT_MESSAGE);
+    }
+
     setIsOptimizing(true);
 
     try {
       const optimizedFiles: File[] = [];
 
-      for (const file of validFiles) {
+      for (const file of filesToAdd) {
         optimizedFiles.push(await optimizePropertyImage(file));
       }
 
@@ -104,10 +121,12 @@ export function PropertyImageUploader({
         onCoverKeyChange(localImageKey(selectedImages[0]));
       }
 
-      const originalBytes = validFiles.reduce((sum, file) => sum + file.size, 0);
+      const originalBytes = filesToAdd.reduce((sum, file) => sum + file.size, 0);
       const optimizedBytes = optimizedFiles.reduce((sum, file) => sum + file.size, 0);
 
-      if (optimizedBytes < originalBytes) {
+      if (exceededLimit) {
+        setMessage(PROPERTY_IMAGE_LIMIT_MESSAGE);
+      } else if (optimizedBytes < originalBytes) {
         setMessage(
           `${selectedImages.length} foto(s) otimizadas de ${formatBytes(
             originalBytes,
@@ -185,7 +204,11 @@ export function PropertyImageUploader({
 
       <button
         type="button"
-        disabled={disabled || isOptimizing}
+        disabled={
+          disabled ||
+          isOptimizing ||
+          existingImages.length + newImages.length >= MAX_PROPERTY_IMAGES
+        }
         onClick={() => inputRef.current?.click()}
         onDragOver={(event) => {
           event.preventDefault();
@@ -206,7 +229,7 @@ export function PropertyImageUploader({
           {isOptimizing ? "Otimizando fotos..." : "Arraste fotos ou clique para selecionar"}
         </span>
         <span className="text-[11px] text-muted-foreground mt-1">
-          JPG, PNG, WebP, AVIF, HEIC ou HEIF. As imagens compatíveis são reduzidas antes do upload.
+          JPG, PNG, WebP, AVIF, HEIC ou HEIF. Máximo de 3 fotos por imóvel.
         </span>
       </button>
 
@@ -222,7 +245,7 @@ export function PropertyImageUploader({
           {allImages.map((image, index) => (
             <div key={image.key} className="group border border-border bg-background">
               <div className="relative aspect-square overflow-hidden bg-muted">
-                <img src={image.src} alt={image.label} className="w-full h-full object-cover" />
+                <img src={image.src} alt={image.label} className="w-full h-full object-contain" />
                 <button
                   type="button"
                   disabled={disabled}

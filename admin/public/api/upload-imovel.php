@@ -15,6 +15,7 @@ if (count($files) === 0) {
 }
 
 $savedFiles = [];
+$warnings = [];
 
 foreach ($files as $file) {
   $validated = validate_uploaded_image($file);
@@ -28,12 +29,20 @@ foreach ($files as $file) {
 
   chmod($targetPath, 0644);
 
+  $watermark = apply_property_image_watermark($targetPath, $validated['extension']);
+
+  if (!$watermark['applied'] && $watermark['warning']) {
+    $warnings[] = $validated['originalName'] . ': ' . $watermark['warning'];
+    error_log('[upload-imovel] watermark fallback: ' . $relativePath . ' - ' . $watermark['warning']);
+  }
+
   $savedFiles[] = [
     'publicUrl' => public_base_url() . '/' . $relativePath,
     'storagePath' => $relativePath,
     'originalName' => $validated['originalName'],
     'filename' => $uniqueName,
     'size' => $validated['size'],
+    'watermark' => $watermark,
   ];
 }
 
@@ -46,6 +55,8 @@ json_response(200, [
   'originalName' => $firstFile['originalName'],
   'filename' => $firstFile['filename'],
   'size' => $firstFile['size'],
+  'watermark' => $firstFile['watermark'],
+  'warnings' => $warnings,
   'images' => $savedFiles,
 ]);
 

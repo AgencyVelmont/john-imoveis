@@ -166,7 +166,7 @@ function PublicImovelDetalhe() {
         <div className="space-y-4">
           <div className="aspect-[16/10] overflow-hidden bg-muted">
             {cover ? (
-              <img src={cover.url} alt={property.title} className="h-full w-full object-cover" />
+              <img src={cover.url} alt={property.title} className="h-full w-full object-contain" />
             ) : (
               <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
                 Imóvel sem imagem
@@ -180,7 +180,7 @@ function PublicImovelDetalhe() {
                   key={image.id}
                   src={image.url}
                   alt={property.title}
-                  className="aspect-square w-full object-cover"
+                  className="aspect-square w-full bg-muted object-contain"
                 />
               ))}
             </div>
@@ -319,8 +319,8 @@ function EditarImovel() {
 
     const totalImagesAfterSave = existingImages.length + newImages.length;
 
-    if (status === "publicado" && totalImagesAfterSave < 6) {
-      setErrorMessage("Para publicar, mantenha ou selecione pelo menos 6 fotos do imóvel.");
+    if (status === "publicado" && totalImagesAfterSave === 0) {
+      setErrorMessage("Para publicar, mantenha ou selecione pelo menos 1 foto do imóvel.");
       return;
     }
 

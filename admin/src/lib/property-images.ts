@@ -4,6 +4,9 @@ const HOSTINGER_API_BASE_URL = "https://felipecorretor.com.br/api";
 const HOSTINGER_UPLOAD_ENDPOINT = `${HOSTINGER_API_BASE_URL}/upload-imovel.php`;
 const HOSTINGER_DELETE_ENDPOINT = `${HOSTINGER_API_BASE_URL}/delete-imovel-image.php`;
 
+export const MAX_PROPERTY_IMAGES = 3;
+export const PROPERTY_IMAGE_LIMIT_MESSAGE = "O limite é de 3 fotos por imóvel.";
+
 const MAX_IMAGE_DIMENSION = 1920;
 const TARGET_IMAGE_BYTES = 900 * 1024;
 const IMAGE_QUALITIES = [0.84, 0.78, 0.72];
@@ -224,8 +227,14 @@ async function uploadImageToHostinger(propertyId: string, file: File) {
     images?: Array<{
       publicUrl?: string;
       storagePath?: string;
+      watermark?: {
+        applied?: boolean;
+        processor?: string | null;
+        warning?: string | null;
+      };
     }>;
     message?: string;
+    warnings?: string[];
   } | null;
   const uploadedImage = payload?.images?.[0] ?? payload;
 

@@ -248,3 +248,236 @@ function absolute_upload_path(string $relativePath): string {
 
   return $target;
 }
+
+function apply_property_image_watermark(string $imagePath, string $extension): array {
+  $logoPath = resolve_watermark_logo_path();
+
+  if (!$logoPath) {
+    return [
+      'applied' => false,
+      'processor' => null,
+      'warning' => 'Logo da marca d\'água não encontrada',
+    ];
+  }
+
+  if (class_exists('Imagick')) {
+    $result = apply_watermark_with_imagick($imagePath, $logoPath, $extension);
+
+    if ($result['applied']) {
+      return $result;
+    }
+  }
+
+  $result = apply_watermark_with_gd($imagePath, $logoPath, $extension);
+
+  if ($result['applied']) {
+    return $result;
+  }
+
+  return [
+    'applied' => false,
+    'processor' => null,
+    'warning' => $result['warning'] ?: 'Formato não processável para marca d\'água',
+  ];
+}
+
+function resolve_watermark_logo_path(): ?string {
+  $candidates = [
+    __DIR__ . '/../logo-share.png',
+    __DIR__ . '/../og-logo.png',
+    __DIR__ . '/../assets/logo-felipe.png',
+    __DIR__ . '/../../public/logo-share.png',
+    __DIR__ . '/../../public/og-logo.png',
+    __DIR__ . '/../../src/assets/logo-felipe.png',
+    __DIR__ . '/../../admin/src/assets/logo-branca.png',
+    __DIR__ . '/../../../public/public/logo-share.png',
+    __DIR__ . '/../../../public/src/assets/logo-felipe.png',
+  ];
+
+  foreach ($candidates as $candidate) {
+    if (is_file($candidate) && is_readable($candidate)) {
+      return $candidate;
+    }
+  }
+
+  return null;
+}
+
+function apply_watermark_with_imagick(string $imagePath, string $logoPath, string $extension): array {
+  try {
+    $image = new Imagick($imagePath);
+    $logo = new Imagick($logoPath);
+
+    $image->setImageOrientation(Imagick::ORIENTATION_TOPLEFT);
+    $imageWidth = $image->getImageWidth();
+    $imageHeight = $image->getImageHeight();
+
+    if ($imageWidth <= 0 || $imageHeight <= 0) {
+      throw new RuntimeException('Dimensões da imagem inválidas');
+    }
+
+    $targetLogoWidth = max(72, (int) round($imageWidth * 0.18));
+    $targetLogoWidth = min($targetLogoWidth, (int) round($imageWidth * 0.32));
+    $logo->thumbnailImage($targetLogoWidth, 0);
+
+    if ($logo->getImageAlphaChannel()) {
+      $logo->evaluateImage(Imagick::EVALUATE_MULTIPLY, 0.42, Imagick::CHANNEL_ALPHA);
+    } else {
+      $logo->setImageOpacity(0.42);
+    }
+
+    $margin = max(16, (int) round(min($imageWidth, $imageHeight) * 0.035));
+    $x = max($margin, $imageWidth - $logo->getImageWidth() - $margin);
+    $y = max($margin, $imageHeight - $logo->getImageHeight() - $margin);
+
+    $image->compositeImage($logo, Imagick::COMPOSITE_OVER, $x, $y);
+    $format = watermark_imagick_format($extension);
+
+    if ($format) {
+      $image->setImageFormat($format);
+    }
+
+    if (in_array($extension, ['jpg', 'jpeg'], true)) {
+      $image->setImageCompressionQuality(88);
+    } elseif ($extension === 'webp') {
+      $image->setImageCompressionQuality(86);
+    } elseif ($extension === 'avif') {
+      $image->setImageCompressionQuality(82);
+    }
+
+    $image->writeImage($imagePath);
+    $image->clear();
+    $logo->clear();
+    chmod($imagePath, 0644);
+
+    return ['applied' => true, 'processor' => 'imagick', 'warning' => null];
+  } catch (Throwable $error) {
+    return ['applied' => false, 'processor' => 'imagick', 'warning' => $error->getMessage()];
+  }
+}
+
+function watermark_imagick_format(string $extension): ?string {
+  return match ($extension) {
+    'jpg', 'jpeg' => 'jpeg',
+    'png' => 'png',
+    'webp' => 'webp',
+    'avif' => 'avif',
+    'heic' => 'heic',
+    'heif' => 'heif',
+    default => null,
+  };
+}
+
+function apply_watermark_with_gd(string $imagePath, string $logoPath, string $extension): array {
+  if (!function_exists('imagecopy')) {
+    return ['applied' => false, 'processor' => 'gd', 'warning' => 'Extensão GD indisponível'];
+  }
+
+  $createImage = gd_create_function_for_extension($extension);
+  $saveImage = gd_save_function_for_extension($extension);
+
+  if (!$createImage || !$saveImage || !is_callable($createImage) || !is_callable($saveImage)) {
+    return ['applied' => false, 'processor' => 'gd', 'warning' => 'Formato sem suporte no GD'];
+  }
+
+  $image = @$createImage($imagePath);
+  $logo = @imagecreatefrompng($logoPath);
+
+  if (!$image || !$logo) {
+    if ($image) imagedestroy($image);
+    if ($logo) imagedestroy($logo);
+
+    return ['applied' => false, 'processor' => 'gd', 'warning' => 'Não foi possível ler imagem ou logo com GD'];
+  }
+
+  $imageWidth = imagesx($image);
+  $imageHeight = imagesy($image);
+  $logoWidth = imagesx($logo);
+  $logoHeight = imagesy($logo);
+
+  if ($imageWidth <= 0 || $imageHeight <= 0 || $logoWidth <= 0 || $logoHeight <= 0) {
+    imagedestroy($image);
+    imagedestroy($logo);
+
+    return ['applied' => false, 'processor' => 'gd', 'warning' => 'Dimensões inválidas'];
+  }
+
+  imagealphablending($image, true);
+  imagesavealpha($image, true);
+
+  $targetLogoWidth = max(72, (int) round($imageWidth * 0.18));
+  $targetLogoWidth = min($targetLogoWidth, (int) round($imageWidth * 0.32));
+  $targetLogoHeight = max(1, (int) round($targetLogoWidth * ($logoHeight / $logoWidth)));
+  $resizedLogo = imagecreatetruecolor($targetLogoWidth, $targetLogoHeight);
+
+  imagealphablending($resizedLogo, false);
+  imagesavealpha($resizedLogo, true);
+  imagecopyresampled($resizedLogo, $logo, 0, 0, 0, 0, $targetLogoWidth, $targetLogoHeight, $logoWidth, $logoHeight);
+  apply_gd_alpha($resizedLogo, 0.42);
+
+  $margin = max(16, (int) round(min($imageWidth, $imageHeight) * 0.035));
+  $x = max($margin, $imageWidth - $targetLogoWidth - $margin);
+  $y = max($margin, $imageHeight - $targetLogoHeight - $margin);
+  imagecopy($image, $resizedLogo, $x, $y, 0, 0, $targetLogoWidth, $targetLogoHeight);
+
+  $saved = save_gd_image($image, $saveImage, $imagePath, $extension);
+
+  imagedestroy($image);
+  imagedestroy($logo);
+  imagedestroy($resizedLogo);
+
+  if (!$saved) {
+    return ['applied' => false, 'processor' => 'gd', 'warning' => 'Não foi possível salvar imagem com GD'];
+  }
+
+  chmod($imagePath, 0644);
+
+  return ['applied' => true, 'processor' => 'gd', 'warning' => null];
+}
+
+function gd_create_function_for_extension(string $extension): ?string {
+  return match ($extension) {
+    'jpg', 'jpeg' => 'imagecreatefromjpeg',
+    'png' => 'imagecreatefrompng',
+    'webp' => function_exists('imagecreatefromwebp') ? 'imagecreatefromwebp' : null,
+    'avif' => function_exists('imagecreatefromavif') ? 'imagecreatefromavif' : null,
+    default => null,
+  };
+}
+
+function gd_save_function_for_extension(string $extension): ?string {
+  return match ($extension) {
+    'jpg', 'jpeg' => 'imagejpeg',
+    'png' => 'imagepng',
+    'webp' => function_exists('imagewebp') ? 'imagewebp' : null,
+    'avif' => function_exists('imageavif') ? 'imageavif' : null,
+    default => null,
+  };
+}
+
+function save_gd_image($image, string $saveImage, string $imagePath, string $extension): bool {
+  return match ($extension) {
+    'jpg', 'jpeg' => (bool) $saveImage($image, $imagePath, 88),
+    'png' => (bool) $saveImage($image, $imagePath, 6),
+    'webp' => (bool) $saveImage($image, $imagePath, 86),
+    'avif' => (bool) $saveImage($image, $imagePath, 82),
+    default => false,
+  };
+}
+
+function apply_gd_alpha($image, float $opacity): void {
+  $width = imagesx($image);
+  $height = imagesy($image);
+  $opacity = max(0, min(1, $opacity));
+
+  for ($x = 0; $x < $width; $x++) {
+    for ($y = 0; $y < $height; $y++) {
+      $rgba = imagecolorat($image, $x, $y);
+      $alpha = ($rgba & 0x7F000000) >> 24;
+      $newAlpha = 127 - (int) round((127 - $alpha) * $opacity);
+      $color = imagecolorsforindex($image, $rgba);
+      $newColor = imagecolorallocatealpha($image, $color['red'], $color['green'], $color['blue'], $newAlpha);
+      imagesetpixel($image, $x, $y, $newColor);
+    }
+  }
+}
