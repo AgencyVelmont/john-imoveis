@@ -13,7 +13,7 @@ export function PropertyCard({ property }: { property: Property }) {
           loading="lazy"
           width={1024}
           height={768}
-          className="h-full w-full object-contain"
+          className="h-full w-full object-cover object-center transition-transform duration-700 group-hover:scale-105"
         />
         <span
           className={`absolute left-4 top-4 px-3 py-1 text-[10px] uppercase tracking-[0.12em] ${

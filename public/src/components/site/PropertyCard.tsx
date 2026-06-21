@@ -155,7 +155,7 @@ export function PropertyCard({ property }: { property: Property }) {
                   sizes="(min-width: 1024px) 33vw, (min-width: 768px) 50vw, 100vw"
                   width={1024}
                   height={768}
-                  className="h-full w-full object-contain"
+                  className="h-full w-full object-cover object-center transition-transform duration-300 ease-out group-hover:scale-[1.025] md:group-hover:scale-[1.04]"
                 />
               </Link>
             ))}
