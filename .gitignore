@@ -12,8 +12,9 @@ dist
 dist-ssr
 .env
 .env.*
-.htaccess
 uploads/
+!public/public/.htaccess
+!admin/public/.htaccess
 *.pem
 *.key
 .output
@@ -37,3 +38,16 @@ uploads/
 *.njsproj
 *.sln
 *.sw?
+
+.secrets/
+
+# Arquivos que não devem ir para o GitHub
+deploy-artifacts/
+admin/dist/
+public/dist/
+admin/node_modules/
+public/node_modules/
+node_modules/
+.env
+.env.*
+.DS_Store

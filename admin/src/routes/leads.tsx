@@ -65,6 +65,16 @@ function LeadsPage() {
     fetchLeads();
   }, [fetchLeads]);
 
+  React.useEffect(() => {
+    if (selectedLead || leads.length === 0) return;
+
+    const leadId = new URLSearchParams(window.location.search).get("lead");
+    if (!leadId) return;
+
+    const lead = leads.find((item) => item.id === leadId);
+    if (lead) setSelectedLead(lead);
+  }, [leads, selectedLead]);
+
   const filteredLeads = React.useMemo(() => {
     const normalizedQuery = normalize(query);
 
@@ -116,11 +126,13 @@ function LeadsPage() {
     setSavingId(lead.id);
 
     try {
-      await updateLeadNotes(lead.id, notes);
+      const savedNotes = await updateLeadNotes(lead.id, notes);
       setLeads((current) =>
-        current.map((item) => (item.id === lead.id ? { ...item, notes } : item)),
+        current.map((item) => (item.id === lead.id ? { ...item, ...savedNotes } : item)),
       );
-      setSelectedLead((current) => (current?.id === lead.id ? { ...current, notes } : current));
+      setSelectedLead((current) =>
+        current?.id === lead.id ? { ...current, ...savedNotes } : current,
+      );
       toast.success("Observação salva.");
     } catch (error) {
       console.error(error);
@@ -187,7 +199,9 @@ function LeadsPage() {
               <span className="text-[10px] uppercase tracking-[0.15em] text-muted-foreground">
                 {leadStatusLabels[status]}
               </span>
-              <strong className="block text-2xl font-display text-navy mt-2">{total}</strong>
+              <strong className="mt-2 block font-display text-[clamp(1.25rem,1.5vw,1.55rem)] leading-[1.15] text-navy">
+                {total}
+              </strong>
             </div>
           ))}
         </section>
@@ -456,6 +470,8 @@ function LeadDetails({
     setNotes(lead?.notes ?? "");
   }, [lead]);
 
+  const hasUnsavedNotes = notes !== (lead?.notes ?? "");
+
   if (!lead) {
     return (
       <aside className="bg-card border border-border p-6 sticky top-6">
@@ -530,8 +546,15 @@ function LeadDetails({
         </div>
 
         <label className="block">
-          <span className="block text-[10px] uppercase tracking-[0.15em] text-muted-foreground mb-2">
-            Observações internas
+          <span className="mb-2 flex items-center justify-between gap-3">
+            <span className="text-[10px] uppercase tracking-[0.15em] text-muted-foreground">
+              Observações internas
+            </span>
+            {hasUnsavedNotes && (
+              <span className="text-[10px] uppercase tracking-[0.12em] text-gold">
+                Alterações não salvas
+              </span>
+            )}
           </span>
           <textarea
             value={notes}
@@ -542,9 +565,17 @@ function LeadDetails({
           />
         </label>
 
+        <p className="text-[11px] leading-5 text-muted-foreground">
+          {lead.notes_updated_at
+            ? `Última atualização em ${formatDateTime(lead.notes_updated_at)}${
+                lead.notes_updated_by ? ` por ${lead.notes_updated_by}` : ""
+              }.`
+            : "Nenhuma observação salva ainda."}
+        </p>
+
         <button
           type="button"
-          disabled={saving}
+          disabled={saving || !hasUnsavedNotes}
           onClick={() => onNotesSave(lead, notes)}
           className="w-full h-10 bg-navy text-white text-xs tracking-[0.1em] uppercase hover:bg-navy-mid transition-colors disabled:opacity-50"
         >
@@ -631,4 +662,11 @@ function normalize(value: unknown) {
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
     .trim();
+}
+
+function formatDateTime(value: string) {
+  return new Intl.DateTimeFormat("pt-BR", {
+    dateStyle: "short",
+    timeStyle: "short",
+  }).format(new Date(value));
 }

@@ -1,5 +1,5 @@
-const APP_SHELL_CACHE = "felipe-admin-shell-v3";
-const ADMIN_ORIGIN = "https://admin.felipecorretor.com.br";
+const APP_SHELL_CACHE = "john-admin-shell-v3";
+const ADMIN_ORIGIN = self.location.origin;
 const ADMIN_LEADS_URL = `${ADMIN_ORIGIN}/leads`;
 const SPA_FALLBACK_URL = "/index.html";
 
@@ -108,10 +108,6 @@ function notificationTargetUrl(url) {
     if (targetUrl.origin !== ADMIN_ORIGIN) {
       return ADMIN_LEADS_URL;
     }
-
-    targetUrl.pathname = "/leads";
-    targetUrl.search = "";
-    targetUrl.hash = "";
 
     return targetUrl.href;
   } catch {

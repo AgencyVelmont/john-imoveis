@@ -18,6 +18,8 @@ export type Lead = {
   source: string | null;
   status: LeadStatus;
   notes: string | null;
+  notes_updated_at: string | null;
+  notes_updated_by: string | null;
   created_at: string;
   updated_at: string | null;
   property?: {
@@ -63,6 +65,8 @@ type LeadRow = Omit<Lead, "property"> & {
   mensagem?: string | null;
   origem?: string | null;
   observacoes?: string | null;
+  notes_updated_at?: string | null;
+  notes_updated_by?: string | null;
   property?: Lead["property"] | Lead["property"][];
 };
 
@@ -83,6 +87,8 @@ export function normalizeLeads(data: LeadRow[] | null | undefined): Lead[] {
       source: textOrFallback(lead.source ?? lead.origem, "Website"),
       status,
       notes: nullableText(lead.notes ?? lead.observacoes),
+      notes_updated_at: lead.notes_updated_at ?? null,
+      notes_updated_by: lead.notes_updated_by ?? null,
       created_at: lead.created_at ?? new Date(0).toISOString(),
       updated_at: lead.updated_at ?? null,
       property,
@@ -151,22 +157,46 @@ export async function updateLeadStatus(leadId: string, status: LeadStatus) {
 }
 
 export async function updateLeadNotes(leadId: string, notes: string) {
-  const { error } = await supabase
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  const now = new Date().toISOString();
+  const payload = {
+    notes: notes || null,
+    notes_updated_at: now,
+    notes_updated_by: user?.id ?? null,
+  };
+
+  const { data, error } = await supabase
     .from("leads")
-    .update({ notes: notes || null, updated_at: new Date().toISOString() })
-    .eq("id", leadId);
+    .update(payload)
+    .eq("id", leadId)
+    .select("notes,notes_updated_at,notes_updated_by")
+    .single();
 
   if (error && isMissingColumnError(error)) {
     const fallback = await supabase
       .from("leads")
-      .update({ observacoes: notes || null, updated_at: new Date().toISOString() })
-      .eq("id", leadId);
+      .update({ observacoes: notes || null, updated_at: now })
+      .eq("id", leadId)
+      .select("observacoes,updated_at")
+      .single();
 
     if (fallback.error) throw fallback.error;
-    return;
+    return {
+      notes: nullableText((fallback.data as { observacoes?: string | null }).observacoes),
+      notes_updated_at: (fallback.data as { updated_at?: string | null }).updated_at ?? now,
+      notes_updated_by: null,
+    };
   }
 
   if (error) throw error;
+
+  return {
+    notes: nullableText((data as { notes?: string | null }).notes),
+    notes_updated_at: (data as { notes_updated_at?: string | null }).notes_updated_at ?? now,
+    notes_updated_by: (data as { notes_updated_by?: string | null }).notes_updated_by ?? null,
+  };
 }
 
 export async function deleteLead(leadId: string) {

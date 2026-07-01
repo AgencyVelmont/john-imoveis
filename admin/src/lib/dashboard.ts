@@ -14,8 +14,10 @@ export type DashboardProperty = Pick<
   | "bedrooms"
   | "neighborhood"
   | "city"
+  | "state"
   | "status"
   | "featured"
+  | "investment_opportunity"
   | "created_at"
 >;
 
@@ -61,7 +63,7 @@ export async function loadDashboardData(): Promise<DashboardData> {
       supabase
         .from("properties")
         .select(
-          "id,title,type,purpose,price,total_area,bedrooms,neighborhood,city,status,featured,created_at",
+          "id,title,type,purpose,price,total_area,bedrooms,neighborhood,city,status,featured,investment_opportunity,created_at",
         )
         .order("created_at", { ascending: false }),
       loadDashboardEvents(),
