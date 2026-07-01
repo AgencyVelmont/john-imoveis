@@ -1,4 +1,4 @@
-name: Deploy John Andrade to Hostinger
+name: Validate John Andrade Frontends
 
 on:
   workflow_dispatch:
@@ -60,30 +60,8 @@ jobs:
           VITE_ADMIN_URL: ${{ secrets.VITE_ADMIN_URL }}
           VITE_VAPID_PUBLIC_KEY: ${{ secrets.VITE_VAPID_PUBLIC_KEY }}
 
-      - name: Deploy public site
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
-        with:
-          server: ${{ secrets.HOSTINGER_HOST }}
-          username: ${{ secrets.HOSTINGER_USERNAME }}
-          password: ${{ secrets.HOSTINGER_PASSWORD }}
-          port: ${{ secrets.HOSTINGER_PORT }}
-          local-dir: public/dist/
-          server-dir: ${{ secrets.HOSTINGER_PUBLIC_PATH }}
-          dangerous-clean-slate: false
-          exclude: |
-            **/.env*
-            **/uploads/**
-
-      - name: Deploy admin and PHP API
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
-        with:
-          server: ${{ secrets.HOSTINGER_HOST }}
-          username: ${{ secrets.HOSTINGER_USERNAME }}
-          password: ${{ secrets.HOSTINGER_PASSWORD }}
-          port: ${{ secrets.HOSTINGER_PORT }}
-          local-dir: admin/dist/
-          server-dir: ${{ secrets.HOSTINGER_ADMIN_PATH }}
-          dangerous-clean-slate: false
-          exclude: |
-            **/.env*
-            **/uploads/**
+      - name: Verify build artifacts
+        run: |
+          test -f public/dist/index.html
+          test -f admin/dist/index.html
+          test -f admin/dist/sw.js
