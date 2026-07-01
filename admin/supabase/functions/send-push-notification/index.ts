@@ -167,7 +167,7 @@ function buildNotificationPayload(payload: RequestPayload | null) {
     return {
       title: "Notificações ativadas",
       body: "Seu celular já pode receber novos leads do painel.",
-      url: "/leads",
+      url: "/admin/leads",
       tag: `teste-${Date.now()}`,
     };
   }
@@ -180,7 +180,7 @@ function buildNotificationPayload(payload: RequestPayload | null) {
   return {
     title: cleanText(payload?.title, "Novo lead recebido"),
     body: cleanText(payload?.body, `${name} • ${phone} • ${interest}`).slice(0, 180),
-    url: lead.id ? `/leads?lead=${encodeURIComponent(String(lead.id))}` : "/leads",
+    url: lead.id ? `/admin/leads?lead=${encodeURIComponent(String(lead.id))}` : "/admin/leads",
     tag: lead.id ? `lead-${lead.id}` : `lead-${Date.now()}`,
   };
 }

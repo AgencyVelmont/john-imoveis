@@ -1,6 +1,7 @@
 import { supabase } from "@/lib/supabase";
 
 export const vapidPublicKey = import.meta.env.VITE_VAPID_PUBLIC_KEY as string | undefined;
+const serviceWorkerBasePath = import.meta.env.BASE_URL || "/";
 
 export type PushSupportStatus =
   | "missing-vapid-key"
@@ -119,7 +120,7 @@ export async function enablePushNotifications(userId: string) {
 export async function disablePushNotifications(userId: string) {
   if (!isPushSupported()) return;
 
-  const registration = await navigator.serviceWorker.getRegistration("/");
+  const registration = await navigator.serviceWorker.getRegistration(serviceWorkerBasePath);
   const subscription = await registration?.pushManager.getSubscription();
 
   if (subscription) {
@@ -156,13 +157,15 @@ export async function testPushNotification() {
 }
 
 async function getServiceWorkerRegistration() {
-  const existingRegistration = await navigator.serviceWorker.getRegistration("/");
+  const existingRegistration = await navigator.serviceWorker.getRegistration(serviceWorkerBasePath);
 
   if (existingRegistration) {
     return existingRegistration;
   }
 
-  return navigator.serviceWorker.register("/sw.js", { scope: "/" });
+  return navigator.serviceWorker.register(`${serviceWorkerBasePath}sw.js`, {
+    scope: serviceWorkerBasePath,
+  });
 }
 
 function urlBase64ToUint8Array(value: string) {

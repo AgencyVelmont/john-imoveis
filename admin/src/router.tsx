@@ -16,6 +16,7 @@ export const getRouter = () => {
 
   const router = createRouter({
     routeTree,
+    basepath: normalizedBasePath(),
     context: { queryClient },
     scrollRestoration: true,
     defaultPreloadStaleTime: 0,
@@ -23,3 +24,9 @@ export const getRouter = () => {
 
   return router;
 };
+
+function normalizedBasePath() {
+  const baseUrl = import.meta.env.BASE_URL || "/";
+  const normalized = baseUrl.replace(/\/$/, "");
+  return normalized || "/";
+}

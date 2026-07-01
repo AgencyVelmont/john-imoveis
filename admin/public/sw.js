@@ -1,7 +1,8 @@
 const APP_SHELL_CACHE = "john-admin-shell-v3";
 const ADMIN_ORIGIN = self.location.origin;
-const ADMIN_LEADS_URL = `${ADMIN_ORIGIN}/leads`;
-const SPA_FALLBACK_URL = "/index.html";
+const ADMIN_BASE_PATH = new URL(self.registration.scope).pathname.replace(/\/$/, "");
+const ADMIN_LEADS_URL = `${ADMIN_ORIGIN}${ADMIN_BASE_PATH}/leads`;
+const SPA_FALLBACK_URL = `${ADMIN_BASE_PATH}/index.html`;
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
@@ -9,11 +10,11 @@ self.addEventListener("install", (event) => {
       .open(APP_SHELL_CACHE)
       .then((cache) =>
         cache.addAll([
-          "/",
+          `${ADMIN_BASE_PATH}/`,
           SPA_FALLBACK_URL,
-          "/manifest.webmanifest",
-          "/favicon.png",
-          "/icons/icon-192x192.png",
+          `${ADMIN_BASE_PATH}/manifest.webmanifest`,
+          `${ADMIN_BASE_PATH}/favicon.png`,
+          `${ADMIN_BASE_PATH}/icons/icon-192x192.png`,
         ]),
       ),
   );
@@ -50,7 +51,7 @@ self.addEventListener("push", (event) => {
   const fallback = {
     title: "Novo lead recebido",
     body: "Abra o painel para ver os detalhes do novo contato.",
-    url: "/leads",
+    url: `${ADMIN_BASE_PATH}/leads`,
   };
 
   const payload = event.data ? parsePushPayload(event.data.text(), fallback) : fallback;
@@ -58,8 +59,8 @@ self.addEventListener("push", (event) => {
   event.waitUntil(
     self.registration.showNotification(payload.title || fallback.title, {
       body: payload.body || fallback.body,
-      icon: "/icons/icon-192x192.png",
-      badge: "/icons/icon-128x128.png",
+      icon: `${ADMIN_BASE_PATH}/icons/icon-192x192.png`,
+      badge: `${ADMIN_BASE_PATH}/icons/icon-128x128.png`,
       data: {
         url: payload.url || fallback.url,
       },
@@ -107,6 +108,10 @@ function notificationTargetUrl(url) {
 
     if (targetUrl.origin !== ADMIN_ORIGIN) {
       return ADMIN_LEADS_URL;
+    }
+
+    if (!targetUrl.pathname.startsWith(`${ADMIN_BASE_PATH}/`)) {
+      targetUrl.pathname = `${ADMIN_BASE_PATH}${targetUrl.pathname}`;
     }
 
     return targetUrl.href;
