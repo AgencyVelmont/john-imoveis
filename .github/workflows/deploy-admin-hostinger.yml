@@ -19,15 +19,9 @@ jobs:
         with:
           node-version: 20
           cache: npm
-
-      - name: Install root dependencies
-        run: npm ci
-
-      - name: Lint root
-        run: npm run lint
-
-      - name: Build root
-        run: npm run build
+          cache-dependency-path: |
+            public/package-lock.json
+            admin/package-lock.json
 
       - name: Install public dependencies
         working-directory: public
