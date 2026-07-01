@@ -13,11 +13,8 @@ import {
   Check,
   Home,
   Images,
-  Loader2,
-  Mail,
   MapPin,
   Maximize,
-  MessageCircle,
   Ruler,
   Tag,
   X,
@@ -25,6 +22,7 @@ import {
 import type { LucideIcon } from "lucide-react";
 import { SiteLayout } from "@/components/site/SiteLayout";
 import { PropertyCard } from "@/components/site/PropertyCard";
+import { EditorialButton } from "@/components/site/EditorialButton";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -39,10 +37,10 @@ import { WHATSAPP_LINK } from "@/lib/site";
 export const Route = createFileRoute("/imoveis/$propertyId")({
   head: () => ({
     meta: [
-      { title: "Detalhes do imóvel | Felipe Vasconcelos" },
+      { title: "Detalhes do imóvel | John Andrade" },
       {
         name: "description",
-        content: "Veja fotos, detalhes e fale com Felipe Vasconcelos sobre este imóvel.",
+        content: "Veja fotos, detalhes e fale com John Andrade sobre este imóvel.",
       },
     ],
   }),
@@ -57,6 +55,8 @@ function PropertyDetailPage() {
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
+  const [website, setWebsite] = useState("");
+  const [loadedAt] = useState(() => Date.now());
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [formError, setFormError] = useState("");
@@ -137,33 +137,20 @@ function PropertyDetailPage() {
       .slice(0, 3);
   }, [properties, property]);
 
-  const derivedCharacteristics = useMemo(() => {
+  const additionalCharacteristics = useMemo(() => {
     if (!property) return [];
 
-    const items = [
-      property.type,
-      property.purpose === "Aluguel" ? "Locação" : "Venda",
-      property.bedrooms > 0
-        ? `${property.bedrooms} quarto${property.bedrooms === 1 ? "" : "s"}`
-        : "",
-      property.suites > 0 ? `${property.suites} suíte${property.suites === 1 ? "" : "s"}` : "",
-      property.bathrooms > 0
-        ? `${property.bathrooms} banheiro${property.bathrooms === 1 ? "" : "s"}`
-        : "",
-      property.parking_spaces > 0
-        ? `${property.parking_spaces} vaga${property.parking_spaces === 1 ? "" : "s"}`
-        : "",
-      property.total_area > 0 ? `${formatArea(property.total_area)} de área total` : "",
-      property.built_area > 0 ? `${formatArea(property.built_area)} de área construída` : "",
-    ].filter(Boolean);
+    const repeatedCoreSpec =
+      /\b(quarto|dorm|su[ií]te|banheiro|vaga|garagem|[áa]rea|terreno|constru[ií]da|venda|loca[cç][aã]o)\b/i;
 
-    return Array.from(new Set([...property.characteristics, ...items]));
+    return Array.from(
+      new Set(property.characteristics.filter((item) => !repeatedCoreSpec.test(item))),
+    );
   }, [property]);
 
   const whatsappMessage = useMemo(() => {
-    if (!property)
-      return "Olá Felipe, vim pelo site e gostaria de mais informações sobre um imóvel.";
-    return `Olá Felipe, tenho interesse no imóvel "${property.title}" (ref. ${property.reference}) em ${property.neighborhood}, ${property.city}. Pode me passar mais informações?`;
+    if (!property) return "Olá John, vim pelo site e gostaria de mais informações sobre um imóvel.";
+    return `Olá John, tenho interesse no imóvel "${property.title}" (ref. ${property.reference}) em ${property.neighborhood}, ${property.city}. Pode me passar mais informações?`;
   }, [property]);
 
   useEffect(() => {
@@ -175,7 +162,7 @@ function PropertyDetailPage() {
   useEffect(() => {
     if (!property) return;
 
-    document.title = `${property.title} | Felipe Vasconcelos`;
+    document.title = `${property.title} | John Andrade`;
   }, [property]);
 
   useEffect(() => {
@@ -211,8 +198,14 @@ function PropertyDetailPage() {
     event.preventDefault();
     if (!property) return;
 
-    setSubmitting(true);
     setFormError("");
+
+    if (website || Date.now() - loadedAt < 1200) {
+      setSubmitted(true);
+      return;
+    }
+
+    setSubmitting(true);
 
     try {
       await insertLead({
@@ -259,14 +252,14 @@ function PropertyDetailPage() {
                   </span>
                 </div>
 
-                <h1 className="mt-5 max-w-5xl font-display text-[clamp(34px,5vw,64px)] font-light leading-tight">
+                <h1 className="mt-5 max-w-5xl font-display text-[clamp(30px,4vw,52px)] font-light leading-[1.05]">
                   {property.title}
                 </h1>
 
-                <p className="mt-5 flex flex-wrap items-center gap-x-2 gap-y-1 text-[15px] text-white/68">
+                <p className="mt-5 flex flex-wrap items-center gap-x-2 gap-y-1 text-[14px] leading-[1.5] text-white/68">
                   <MapPin className="h-4 w-4 text-gold-light" />
                   {property.neighborhood}, {property.city}
-                  {property.state ? ` - ${property.state}` : ""}
+                  {property.state ? `, ${property.state}` : ""}
                 </p>
               </div>
 
@@ -274,18 +267,19 @@ function PropertyDetailPage() {
                 <p className="text-[11px] uppercase tracking-[0.15em] text-gold-light">
                   Valor do imóvel
                 </p>
-                <p className="mt-2 font-display text-[36px] font-medium leading-none text-white">
+                <p className="mt-2 font-display text-[clamp(1.65rem,2.4vw,2rem)] font-medium leading-[1.05] text-white">
                   {formatPrice(property.price, property.purpose)}
                 </p>
-                <a
+                <EditorialButton
                   href={WHATSAPP_LINK(whatsappMessage)}
                   target="_blank"
                   rel="noreferrer"
                   onClick={handleWhatsAppClick}
-                  className="premium-cta mt-6 inline-flex w-full items-center justify-center gap-2 bg-whatsapp px-6 py-4 text-[13px] font-medium uppercase tracking-[0.08em] text-white hover:bg-[oklch(0.6_0.18_145)]"
+                  tone="whatsapp"
+                  className="mt-6 w-full"
                 >
-                  <MessageCircle className="h-4 w-4" /> Chamar no WhatsApp
-                </a>
+                  Chamar no WhatsApp
+                </EditorialButton>
               </div>
             </div>
           )}
@@ -294,8 +288,8 @@ function PropertyDetailPage() {
               <span className="mt-8 block text-[11px] uppercase tracking-[0.15em] text-gold-light">
                 Detalhes do imóvel
               </span>
-              <h1 className="mt-3 max-w-4xl font-display text-[clamp(36px,5vw,64px)] font-light leading-tight">
-                Imóvel em Santarém-PA
+              <h1 className="mt-3 max-w-4xl font-display text-[clamp(30px,4vw,52px)] font-light leading-[1.05]">
+                Imóvel em PA ou SC
               </h1>
             </>
           )}
@@ -311,7 +305,9 @@ function PropertyDetailPage() {
             </div>
           ) : isError || !property ? (
             <div className="border border-dashed border-border bg-white p-16 text-center">
-              <p className="font-display text-2xl text-navy">Imóvel não encontrado</p>
+              <p className="font-display text-[clamp(1.35rem,1.7vw,1.65rem)] leading-[1.12] text-navy">
+                Imóvel não encontrado
+              </p>
               <p className="mt-2 text-muted-foreground">
                 O imóvel pode ter sido removido ou ainda não está publicado.
               </p>
@@ -362,14 +358,14 @@ function PropertyDetailPage() {
                   </div>
 
                   <section className="mt-10 bg-white p-6 shadow-elegant-sm md:p-8">
-                    <div className="grid gap-px bg-border sm:grid-cols-2 lg:grid-cols-3">
+                    <div className="grid grid-cols-3 gap-px bg-border">
                       <Info icon={BedDouble} label="Quartos" value={property.bedrooms || "-"} />
                       <Info icon={Home} label="Suítes" value={property.suites || "-"} />
                       <Info icon={Bath} label="Banheiros" value={property.bathrooms || "-"} />
                       <Info icon={Car} label="Vagas" value={property.parking_spaces || "-"} />
                       <Info
                         icon={Maximize}
-                        label="Área total"
+                        label="Área do terreno"
                         value={property.total_area ? formatArea(property.total_area) : "-"}
                       />
                       <Info
@@ -384,7 +380,7 @@ function PropertyDetailPage() {
                     <p className="text-[11px] uppercase tracking-[0.15em] text-gold">
                       Descrição completa
                     </p>
-                    <h2 className="mt-3 font-display text-3xl font-normal text-navy">
+                    <h2 className="mt-3 font-display text-[clamp(1.55rem,2vw,2rem)] font-normal leading-[1.1] text-navy">
                       {property.title}
                     </h2>
                     {property.locationText && (
@@ -399,10 +395,10 @@ function PropertyDetailPage() {
                     </p>
                   </section>
 
-                  {derivedCharacteristics.length > 0 && (
+                  {additionalCharacteristics.length > 0 && (
                     <FeatureSection
                       title="Características do imóvel"
-                      items={derivedCharacteristics}
+                      items={additionalCharacteristics}
                       icon={Check}
                     />
                   )}
@@ -427,6 +423,7 @@ function PropertyDetailPage() {
                     <p className="flex items-center gap-2">
                       <MapPin className="h-4 w-4 text-navy-light" />
                       {property.neighborhood}, {property.city}
+                      {property.state ? `, ${property.state}` : ""}
                     </p>
                     <p className="flex items-center gap-2">
                       <Tag className="h-4 w-4 text-navy-light" />
@@ -434,18 +431,32 @@ function PropertyDetailPage() {
                     </p>
                   </div>
 
-                  <a
+                  <EditorialButton
                     href={WHATSAPP_LINK(whatsappMessage)}
                     target="_blank"
                     rel="noreferrer"
                     onClick={handleWhatsAppClick}
-                    className="premium-cta mt-7 inline-flex w-full items-center justify-center gap-2 bg-whatsapp px-6 py-4 text-[13px] font-medium uppercase tracking-[0.08em] text-white hover:bg-[oklch(0.6_0.18_145)]"
+                    tone="whatsapp"
+                    className="mt-7 w-full"
                   >
-                    <MessageCircle className="h-4 w-4" /> WhatsApp personalizado
-                  </a>
+                    WhatsApp personalizado
+                  </EditorialButton>
 
                   <form onSubmit={handleSubmit} className="mt-8 border-t border-border pt-8">
-                    <h2 className="font-display text-2xl font-normal text-navy">Tenho interesse</h2>
+                    <input
+                      type="text"
+                      name="website"
+                      value={website}
+                      onChange={(event) => setWebsite(event.target.value)}
+                      tabIndex={-1}
+                      autoComplete="off"
+                      className="hidden"
+                      aria-hidden="true"
+                    />
+
+                    <h2 className="font-display text-[clamp(1.35rem,1.7vw,1.65rem)] font-normal leading-[1.12] text-navy">
+                      Tenho interesse
+                    </h2>
                     <div className="mt-5 space-y-4">
                       <Input
                         value={name}
@@ -483,18 +494,14 @@ function PropertyDetailPage() {
                       </p>
                     )}
 
-                    <button
+                    <EditorialButton
                       type="submit"
                       disabled={submitting}
-                      className="premium-cta mt-5 inline-flex w-full items-center justify-center gap-2 bg-navy px-6 py-4 text-[13px] font-medium uppercase tracking-[0.08em] text-white hover:bg-navy-light disabled:cursor-not-allowed disabled:opacity-60"
+                      tone="green"
+                      className="mt-5 w-full"
                     >
-                      {submitting ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : (
-                        <Mail className="h-4 w-4" />
-                      )}
-                      Enviar interesse
-                    </button>
+                      {submitting ? "Enviando..." : "Enviar interesse"}
+                    </EditorialButton>
                   </form>
                 </aside>
               </div>
@@ -504,7 +511,7 @@ function PropertyDetailPage() {
                   <p className="text-[11px] uppercase tracking-[0.15em] text-gold">
                     Imóveis semelhantes
                   </p>
-                  <h2 className="mt-3 font-display text-4xl font-normal text-navy">
+                  <h2 className="mt-3 font-display text-[clamp(1.8rem,2.6vw,2.6rem)] font-normal leading-[1.08] text-navy">
                     Outras opções com o mesmo perfil
                   </h2>
                   <div className="mt-8 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -585,7 +592,9 @@ function Info({
     <div className="bg-white p-5">
       <Icon className="mb-3 h-5 w-5 text-gold" />
       <p className="text-[11px] uppercase tracking-[0.12em] text-muted-foreground">{label}</p>
-      <p className="mt-1 font-display text-2xl text-navy">{value}</p>
+      <p className="mt-1 font-display text-[clamp(1.25rem,1.5vw,1.55rem)] leading-[1.15] text-navy">
+        {value}
+      </p>
     </div>
   );
 }

@@ -1,5 +1,12 @@
 import fallbackImage from "@/assets/property-1.jpg";
-import { supabase } from "@/lib/supabase";
+import { isSupabaseConfigured, supabase } from "@/lib/supabase";
+
+const UPLOAD_PUBLIC_URL = (
+  import.meta.env.VITE_UPLOAD_PUBLIC_URL ||
+  import.meta.env.VITE_SITE_URL ||
+  import.meta.env.VITE_PUBLIC_SITE_URL ||
+  ""
+).replace(/\/$/, "");
 
 export type PropertyType = string;
 export type Operation = "Venda" | "Aluguel" | string;
@@ -46,6 +53,7 @@ type PropertyRow = {
   status?: string | null;
   slug?: string | null;
   featured?: boolean | null;
+  investment_opportunity?: boolean | null;
   characteristics?: unknown;
   features?: unknown;
   amenities?: unknown;
@@ -89,6 +97,7 @@ export interface Property {
   characteristics: string[];
   infrastructure: string[];
   featured?: boolean;
+  investmentOpportunity: boolean;
 }
 
 const propertySelect = `
@@ -113,6 +122,14 @@ const normalizePurpose = (purpose?: string | null): Operation => {
   }
   if (value.toLowerCase() === "venda") return "Venda";
   return value;
+};
+
+export const normalizePropertyState = (state?: string | null) => {
+  const normalized = String(state || "")
+    .trim()
+    .toUpperCase();
+
+  return normalized === "PA" || normalized === "SC" ? normalized : "";
 };
 
 const normalizeList = (value: unknown): string[] => {
@@ -149,16 +166,26 @@ const imageOrder = (image: PropertyImageRow) =>
 
 const resolveImageUrl = (image: PropertyImageRow) => {
   const directUrl = image.public_url || image.image_url || image.url;
-  if (directUrl) return directUrl;
+  if (directUrl) return normalizeHostedImageUrl(directUrl);
 
-  const path = (image.storage_path || image.file_path || image.path)?.replace(
-    /^property-images\//,
-    "",
-  );
+  const path = image.storage_path || image.file_path || image.path;
   if (!path) return fallbackImage;
 
-  const { data } = supabase.storage.from("property-images").getPublicUrl(path);
-  return data.publicUrl;
+  return normalizeHostedImageUrl(path);
+};
+
+const normalizeHostedImageUrl = (value: string) => {
+  const cleanValue = value.trim();
+  if (!cleanValue) return fallbackImage;
+  if (/^https?:\/\//i.test(cleanValue)) return cleanValue;
+
+  const path = cleanValue.replace(/^\/+/, "").replace(/^property-images\//, "uploads/imoveis/");
+
+  if (!path.startsWith("uploads/imoveis/")) {
+    return cleanValue.startsWith("/") ? cleanValue : `/${cleanValue}`;
+  }
+
+  return UPLOAD_PUBLIC_URL ? `${UPLOAD_PUBLIC_URL}/${path}` : `/${path}`;
 };
 
 const normalizeImages = (images: PropertyImageRow[] | null | undefined): PropertyImage[] => {
@@ -193,7 +220,7 @@ const normalizeProperty = (row: PropertyRow): Property => {
     locationText: row.location_text || "",
     neighborhood: row.neighborhood || "Santarém",
     city: row.city || "Santarém",
-    state: row.state || "PA",
+    state: normalizePropertyState(row.state),
     price: asNumber(row.price),
     type: row.type || "Imóvel",
     purpose,
@@ -213,10 +240,13 @@ const normalizeProperty = (row: PropertyRow): Property => {
       row.infrastructure || row.condominium_features || row.condo_features,
     ),
     featured: Boolean(row.featured),
+    investmentOpportunity: Boolean(row.investment_opportunity),
   };
 };
 
 export async function fetchPublishedProperties() {
+  if (!isSupabaseConfigured) return [];
+
   const { data, error } = await supabase
     .from("properties")
     .select(propertySelect)
@@ -228,6 +258,8 @@ export async function fetchPublishedProperties() {
 }
 
 export async function fetchPublishedPropertyById(propertyId: string) {
+  if (!isSupabaseConfigured) return null;
+
   const { data, error } = await supabase
     .from("properties")
     .select(propertySelect)
@@ -287,10 +319,6 @@ export async function insertLead(input: {
   const { error } = await supabase.from("leads").insert(portuguesePayload);
 
   if (!error) {
-    await notifyLeadCreated({
-      ...input,
-      source: "website",
-    });
     return;
   }
 
@@ -299,11 +327,6 @@ export async function insertLead(input: {
     const retry = await supabase.from("leads").insert(retryPayload);
 
     if (!retry.error) {
-      await notifyLeadCreated({
-        ...input,
-        propertyId: undefined,
-        source: "website",
-      });
       return;
     }
   }
@@ -319,55 +342,10 @@ export async function insertLead(input: {
     const retry = await supabase.from("leads").insert(retryPayload);
 
     if (retry.error) throw retry.error;
-
-    await notifyLeadCreated({
-      ...input,
-      propertyId: undefined,
-      source: "website",
-    });
     return;
   }
 
   if (fallback.error) throw fallback.error;
-
-  await notifyLeadCreated({
-    ...input,
-    source: "website",
-  });
-}
-
-export async function notifyLeadCreated(input: {
-  id?: string;
-  name: string;
-  phone: string;
-  email?: string;
-  message: string;
-  propertyId?: string;
-  source?: string;
-}) {
-  try {
-    await supabase.functions.invoke("send-push-notification", {
-      body: {
-        title: "Novo lead recebido",
-        body: `${input.name} enviou uma mensagem pelo site`,
-        lead: {
-          id: input.id,
-          name: input.name,
-          nome: input.name,
-          phone: input.phone,
-          telefone: input.phone,
-          email: input.email || "",
-          message: input.message,
-          mensagem: input.message,
-          source: input.source || "website",
-          origem: input.source || "website",
-          property_id: input.propertyId || null,
-        },
-      },
-    });
-  } catch (error) {
-    console.warn("Could not send push notification for new lead", error);
-  }
 }
 
 function isMissingColumnError(error: unknown) {

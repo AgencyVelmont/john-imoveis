@@ -23,7 +23,7 @@ export function PropertyCard({ property }: { property: Property }) {
   const pointerStartXRef = useRef(0);
   const pointerMovedRef = useRef(false);
 
-  const msg = `Olá Felipe, tenho interesse no imóvel "${property.title}" (${property.neighborhood}). Pode me passar mais informações?`;
+  const msg = `Olá John, tenho interesse no imóvel "${property.title}" (${property.neighborhood}). Pode me passar mais informações?`;
   const propertyRouteParams = { propertyId: property.id };
 
   const images = useMemo(
@@ -122,8 +122,8 @@ export function PropertyCard({ property }: { property: Property }) {
   }, []);
 
   return (
-    <article className="group flex flex-col overflow-hidden bg-white shadow-elegant-sm transition-all duration-300 hover:-translate-y-1.5 hover:shadow-elegant-lg">
-      <div className="relative aspect-[4/3] overflow-hidden bg-secondary">
+    <article className="group relative flex flex-col overflow-hidden bg-off-white transition duration-300">
+      <div className="relative aspect-[1.12/1] overflow-hidden bg-warm-gray">
         <div
           ref={mobileScrollRef}
           onScroll={handleMobileScroll}
@@ -155,7 +155,7 @@ export function PropertyCard({ property }: { property: Property }) {
                   sizes="(min-width: 1024px) 33vw, (min-width: 768px) 50vw, 100vw"
                   width={1024}
                   height={768}
-                  className="h-full w-full object-cover object-center transition-transform duration-300 ease-out group-hover:scale-[1.025] md:group-hover:scale-[1.04]"
+                  className="h-full w-full object-cover object-center transition-transform duration-500 ease-out group-hover:scale-[1.03]"
                 />
               </Link>
             ))}
@@ -163,10 +163,11 @@ export function PropertyCard({ property }: { property: Property }) {
         </div>
 
         <span
-          className={`absolute left-4 top-4 z-10 px-3 py-1 text-[10px] uppercase tracking-[0.12em] ${
-            property.featured ? "bg-gold text-navy" : "bg-navy text-white"
+          className={`absolute left-4 top-4 z-10 inline-flex items-center gap-2 px-3 py-2 text-[10px] font-bold uppercase tracking-[0.16em] ${
+            property.featured ? "bg-peach text-deep-green" : "bg-deep-green text-white"
           }`}
         >
+          <KeyBadge />
           {property.featured ? "Destaque" : property.purpose}
         </span>
 
@@ -175,7 +176,7 @@ export function PropertyCard({ property }: { property: Property }) {
             <button
               type="button"
               onClick={previousImage}
-              className="absolute left-3 top-1/2 z-20 hidden h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full border border-white/20 bg-black/35 text-white opacity-0 shadow-elegant-sm backdrop-blur-sm transition-all duration-200 hover:bg-black/60 group-hover:opacity-100 md:flex"
+              className="absolute left-4 top-1/2 z-20 hidden h-10 w-10 -translate-y-1/2 items-center justify-center border border-white/25 bg-deep-green/40 text-white opacity-0 shadow-elegant-sm backdrop-blur transition-all duration-200 hover:bg-deep-green/70 group-hover:opacity-100 md:flex"
               aria-label="Imagem anterior"
             >
               <ChevronLeft className="h-4 w-4" />
@@ -184,7 +185,7 @@ export function PropertyCard({ property }: { property: Property }) {
             <button
               type="button"
               onClick={nextImage}
-              className="absolute right-3 top-1/2 z-20 hidden h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full border border-white/20 bg-black/35 text-white opacity-0 shadow-elegant-sm backdrop-blur-sm transition-all duration-200 hover:bg-black/60 group-hover:opacity-100 md:flex"
+              className="absolute right-4 top-1/2 z-20 hidden h-10 w-10 -translate-y-1/2 items-center justify-center border border-white/25 bg-deep-green/40 text-white opacity-0 shadow-elegant-sm backdrop-blur transition-all duration-200 hover:bg-deep-green/70 group-hover:opacity-100 md:flex"
               aria-label="Próxima imagem"
             >
               <ChevronRight className="h-4 w-4" />
@@ -197,7 +198,7 @@ export function PropertyCard({ property }: { property: Property }) {
                   type="button"
                   onClick={(event) => goToImage(event, index)}
                   className={`h-1.5 rounded-full shadow-sm transition-all duration-200 ${
-                    imageIndex === index ? "w-5 bg-white" : "w-1.5 bg-white/55 hover:bg-white/90"
+                    imageIndex === index ? "w-5 bg-peach" : "w-1.5 bg-white/70 hover:bg-white"
                   }`}
                   aria-label={`Ver imagem ${index + 1}`}
                 />
@@ -207,61 +208,62 @@ export function PropertyCard({ property }: { property: Property }) {
         )}
       </div>
 
-      <div className="flex flex-1 flex-col p-6">
-        <p className="mb-2 text-[10px] uppercase tracking-[0.15em] text-gold">
+      <div className="flex flex-1 flex-col border border-t-0 border-deep-green/12 p-5">
+        <p className="mb-3 text-[10px] font-bold uppercase tracking-[0.2em] text-sage">
           {property.type} · {property.purpose}
         </p>
 
         <Link
           to="/imoveis/$propertyId"
           params={propertyRouteParams}
-          className="mb-1.5 font-display text-xl font-normal leading-snug text-navy transition-colors hover:text-gold"
+          className="mb-2 text-[clamp(1.25rem,1.45vw,1.6rem)] leading-[1.15] text-deep-green transition-colors hover:text-sage"
         >
           {property.title}
         </Link>
 
-        <p className="mb-4 flex items-center gap-1 text-[13px] text-muted-foreground">
-          <MapPin className="h-3.5 w-3.5 text-navy-light" />
+        <p className="mb-5 flex items-center gap-1.5 text-[12px] leading-[1.5] text-sage">
+          <MapPin className="h-3.5 w-3.5 text-peach" />
           {property.neighborhood}, {property.city}
+          {property.state ? `, ${property.state}` : ""}
         </p>
 
-        <div className="my-2 flex flex-wrap gap-4 border-y border-border py-4 text-[12px] text-[oklch(0.45_0.01_90)]">
+        <div className="my-3 grid grid-cols-2 gap-px bg-deep-green/10 text-[11px] leading-[1.45] text-sage sm:grid-cols-3">
           {property.bedrooms > 0 && (
-            <span className="flex items-center gap-1.5">
-              <BedDouble className="h-3.5 w-3.5 text-navy-light" /> {property.bedrooms} dorm
+            <span className="flex items-center gap-1.5 bg-off-white px-3 py-3">
+              <BedDouble className="h-3.5 w-3.5 text-deep-green" /> {property.bedrooms} dorm
             </span>
           )}
 
           {property.suites > 0 && (
-            <span className="flex items-center gap-1.5">
-              <Home className="h-3.5 w-3.5 text-navy-light" /> {property.suites}{" "}
+            <span className="flex items-center gap-1.5 bg-off-white px-3 py-3">
+              <Home className="h-3.5 w-3.5 text-deep-green" /> {property.suites}{" "}
               {property.suites === 1 ? "suíte" : "suítes"}
             </span>
           )}
 
-          <span className="flex items-center gap-1.5">
-            <Bath className="h-3.5 w-3.5 text-navy-light" /> {property.bathrooms} banh
+          <span className="flex items-center gap-1.5 bg-off-white px-3 py-3">
+            <Bath className="h-3.5 w-3.5 text-deep-green" /> {property.bathrooms} banh
           </span>
 
-          <span className="flex items-center gap-1.5">
-            <Car className="h-3.5 w-3.5 text-navy-light" /> {property.parking_spaces} vagas
+          <span className="flex items-center gap-1.5 bg-off-white px-3 py-3">
+            <Car className="h-3.5 w-3.5 text-deep-green" /> {property.parking_spaces} vagas
           </span>
 
-          <span className="flex items-center gap-1.5">
-            <Maximize className="h-3.5 w-3.5 text-navy-light" /> {property.total_area} m²
+          <span className="flex items-center gap-1.5 bg-off-white px-3 py-3">
+            <Maximize className="h-3.5 w-3.5 text-deep-green" /> Terreno {property.total_area} m²
           </span>
         </div>
 
         <div className="mt-auto pt-2">
-          <span className="font-display text-[22px] font-medium text-navy">
+          <span className="text-[clamp(1.1rem,1.25vw,1.25rem)] font-semibold text-deep-green">
             {formatPrice(property.price, property.purpose)}
           </span>
 
-          <div className="mt-4 grid grid-cols-2 gap-2">
+          <div className="mt-5 grid grid-cols-2 gap-px bg-deep-green/12">
             <Link
               to="/imoveis/$propertyId"
               params={propertyRouteParams}
-              className="premium-cta inline-flex min-h-10 items-center justify-center gap-1.5 bg-navy px-3 py-2 text-center text-[11px] uppercase tracking-[0.06em] text-white hover:bg-navy-light"
+              className="inline-flex min-h-12 items-center justify-center gap-1.5 bg-deep-green px-3 py-2 text-center text-[10px] font-bold uppercase tracking-[0.1em] text-white transition hover:bg-sage"
             >
               Expandir <ArrowRight className="h-3.5 w-3.5" />
             </Link>
@@ -271,7 +273,7 @@ export function PropertyCard({ property }: { property: Property }) {
               target="_blank"
               rel="noreferrer"
               onClick={handleWhatsAppClick}
-              className="premium-cta inline-flex min-h-10 items-center justify-center gap-1.5 bg-whatsapp px-3 py-2 text-center text-[11px] uppercase tracking-[0.06em] text-white hover:bg-[oklch(0.6_0.18_145)]"
+              className="inline-flex min-h-12 items-center justify-center gap-1.5 bg-peach px-3 py-2 text-center text-[10px] font-bold uppercase tracking-[0.1em] text-deep-green transition hover:bg-white"
             >
               <MessageCircle className="h-3.5 w-3.5" /> WhatsApp
             </a>
@@ -279,5 +281,16 @@ export function PropertyCard({ property }: { property: Property }) {
         </div>
       </div>
     </article>
+  );
+}
+
+function KeyBadge() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 18 18" aria-hidden="true" className="shrink-0">
+      <path
+        d="M17 6.2a5.2 5.2 0 0 1-6.2 5.1l-.7.8a.8.8 0 0 1-.6.3H8.2v1.3a.8.8 0 0 1-.8.8H6.1v1.3a.8.8 0 0 1-.8.8H1.8a.8.8 0 0 1-.8-.8v-2.5a.8.8 0 0 1 .2-.6l5.1-5.1A5.2 5.2 0 1 1 17 6.2Zm-5.7-1.4a1.3 1.3 0 1 0 2.6 0 1.3 1.3 0 0 0-2.6 0Z"
+        fill="currentColor"
+      />
+    </svg>
   );
 }

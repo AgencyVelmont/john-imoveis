@@ -1,21 +1,25 @@
 <?php
-header('Content-Type: application/json; charset=utf-8');
+
+load_production_env();
+send_cors_headers();
+
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+  http_response_code(204);
+  exit;
+}
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-  http_response_code(405);
-  echo json_encode(['ok' => false, 'message' => 'Method not allowed']);
-  exit;
+  json_response(405, ['ok' => false, 'message' => 'Method not allowed']);
 }
 
 $raw = file_get_contents('php://input');
 $input = json_decode($raw, true);
 
 if (!is_array($input)) {
-  http_response_code(400);
-  echo json_encode(['ok' => false, 'message' => 'Invalid payload']);
-  exit;
+  json_response(400, ['ok' => false, 'message' => 'Invalid payload']);
 }
 
+$honeypot = trim((string)($input['website'] ?? $input['company'] ?? ''));
 $name = trim((string)($input['name'] ?? ''));
 $phone = trim((string)($input['phone'] ?? ''));
 $email = trim((string)($input['email'] ?? ''));
@@ -24,19 +28,19 @@ $message = trim((string)($input['message'] ?? ''));
 $propertyId = trim((string)($input['propertyId'] ?? ''));
 $propertyTitle = trim((string)($input['propertyTitle'] ?? ''));
 
+if ($honeypot !== '') {
+  json_response(200, ['ok' => true, 'mailSent' => true, 'leadSaved' => true]);
+}
+
 if (strlen($name) < 2 || strlen($phone) < 10 || strlen($message) < 5) {
-  http_response_code(422);
-  echo json_encode(['ok' => false, 'message' => 'Campos obrigatórios inválidos']);
-  exit;
+  json_response(422, ['ok' => false, 'message' => 'Campos obrigatórios inválidos']);
 }
 
 if ($email !== '' && !filter_var($email, FILTER_VALIDATE_EMAIL)) {
-  http_response_code(422);
-  echo json_encode(['ok' => false, 'message' => 'E-mail inválido']);
-  exit;
+  json_response(422, ['ok' => false, 'message' => 'E-mail inválido']);
 }
 
-$to = getenv('CONTACT_TO_EMAIL') ?: 'contato@felipecorretor.com.br';
+$to = getenv('CONTACT_TO_EMAIL') ?: 'contato@johnandrade.com.br';
 $subject = 'Novo lead pelo site - ' . $interest;
 $bodyLines = [
   'Novo contato recebido pelo site.',
@@ -61,7 +65,7 @@ $bodyLines[] = $message;
 
 $body = implode("\n", $bodyLines);
 $headers = [
-  'From: Site Felipe Vasconcelos <noreply@felipecorretor.com.br>',
+  'From: Site John Andrade <' . (getenv('MAIL_FROM_ADDRESS') ?: 'noreply@johnandrade.com.br') . '>',
   'Reply-To: ' . ($email !== '' ? $email : $to),
   'Content-Type: text/plain; charset=UTF-8',
 ];
@@ -109,20 +113,55 @@ if ($supabaseUrl !== '' && $supabaseAnonKey !== '') {
 }
 
 if (!$mailSent || !$leadSaved) {
-  http_response_code(500);
-  echo json_encode([
+  json_response(500, [
     'ok' => false,
     'mailSent' => $mailSent,
     'leadSaved' => $leadSaved,
   ]);
-  exit;
 }
 
-echo json_encode([
+json_response(200, [
   'ok' => true,
   'mailSent' => true,
   'leadSaved' => true,
 ]);
+
+function send_cors_headers() {
+  $origin = (string)($_SERVER['HTTP_ORIGIN'] ?? '');
+  $configured = array_filter(array_map('trim', explode(',', (string)getenv('ALLOWED_ORIGINS'))));
+  $fallbacks = array_filter([
+    getenv('VITE_SITE_URL') ?: '',
+    getenv('VITE_PUBLIC_SITE_URL') ?: '',
+    getenv('PUBLIC_SITE_URL') ?: '',
+    'https://johnandradecorretor.com.br',
+    'https://www.johnandradecorretor.com.br',
+  ]);
+  $allowedOrigins = array_values(array_unique(array_merge($configured, $fallbacks)));
+
+  if (in_array($origin, $allowedOrigins, true)) {
+    header('Access-Control-Allow-Origin: ' . $origin);
+    header('Vary: Origin');
+  }
+
+  header('Access-Control-Allow-Methods: POST, OPTIONS');
+  header('Access-Control-Allow-Headers: Content-Type');
+  header('Access-Control-Max-Age: 86400');
+}
+
+function load_production_env() {
+  $envFile = getenv('JOHN_PRODUCTION_ENV_FILE') ?: '/home/u429221902/.johnandrade-env.php';
+
+  if (is_string($envFile) && is_readable($envFile)) {
+    require_once $envFile;
+  }
+}
+
+function json_response($status, $payload) {
+  http_response_code($status);
+  header('Content-Type: application/json; charset=utf-8');
+  echo json_encode($payload);
+  exit;
+}
 
 function postLead($supabaseUrl, $supabaseAnonKey, $payload) {
   $ch = curl_init(rtrim($supabaseUrl, '/') . '/rest/v1/leads');

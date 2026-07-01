@@ -1,7 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { MessageCircle, MapPin } from "lucide-react";
+import { MapPin } from "lucide-react";
 import { SiteLayout } from "@/components/site/SiteLayout";
 import { SectionHeader } from "@/components/site/SectionHeader";
+import { EditorialButton } from "@/components/site/EditorialButton";
 import {
   Accordion,
   AccordionContent,
@@ -13,11 +14,11 @@ import { WHATSAPP_LINK, SITE } from "@/lib/site";
 export const Route = createFileRoute("/faq")({
   head: () => ({
     meta: [
-      { title: "FAQ e Localização | Felipe Vasconcelos" },
+      { title: "FAQ e Atendimento | John Andrade" },
       {
         name: "description",
         content:
-          "Perguntas frequentes sobre compra, venda, aluguel, documentação e financiamento de imóveis em Santarém-PA.",
+          "Perguntas frequentes sobre compra, venda, aluguel, documentação, segurança jurídica e financiamento de imóveis.",
       },
     ],
   }),
@@ -35,7 +36,7 @@ const faqs = [
   },
   {
     q: "Trabalha com aluguel também?",
-    a: "Sim, com imóveis residenciais e comerciais para locação em Santarém e região, intermediando contrato, vistoria e documentação.",
+    a: "Sim, com imóveis residenciais e comerciais para locação, intermediando contrato, vistoria e documentação.",
   },
   {
     q: "Quais documentos preciso para comprar um imóvel?",
@@ -47,7 +48,7 @@ const faqs = [
   },
   {
     q: "Quais bairros e cidades vocês atendem?",
-    a: `${SITE.region}. Caso o imóvel esteja em outra região, conversamos sobre a melhor forma de te ajudar.`,
+    a: `${SITE.region}. Caso o imóvel esteja em outra região, conversamos sobre a melhor forma de ajudar.`,
   },
   {
     q: "Como é feita a avaliação do meu imóvel?",
@@ -65,10 +66,10 @@ function FAQPage() {
       <section className="bg-gradient-navy px-6 py-20 text-white md:px-12">
         <div className="mx-auto max-w-7xl">
           <span className="eyebrow text-gold-light">Tire suas dúvidas</span>
-          <h1 className="mt-3 font-display text-[clamp(38px,5vw,64px)] font-light leading-tight">
+          <h1 className="mt-3 font-display text-[clamp(2.2rem,4vw,4rem)] font-light leading-[1.05]">
             Perguntas <em className="italic text-gold-light">frequentes</em>
           </h1>
-          <p className="mt-4 max-w-2xl text-[15px] text-white/65">
+          <p className="mt-4 max-w-2xl text-[14px] leading-[1.6] text-white/65">
             Reuni aqui as dúvidas mais comuns sobre compra, venda, aluguel, documentação e
             atendimento.
           </p>
@@ -109,8 +110,8 @@ function FAQPage() {
           <div className="grid gap-8 lg:grid-cols-[1.3fr_1fr]">
             <div className="aspect-[16/10] overflow-hidden border border-border bg-secondary">
               <iframe
-                title="Mapa Santarém-PA"
-                src="https://www.google.com/maps?q=Santar%C3%A9m%2C+PA&output=embed"
+                title="Mapa de atendimento"
+                src={`https://www.google.com/maps?q=${encodeURIComponent(SITE.mapsQuery)}&output=embed`}
                 className="h-full w-full"
                 loading="lazy"
                 referrerPolicy="no-referrer-when-downgrade"
@@ -119,7 +120,9 @@ function FAQPage() {
 
             <div className="flex flex-col gap-6">
               <div className="bg-navy p-8 text-white">
-                <h3 className="font-display text-2xl">{SITE.name}</h3>
+                <h3 className="font-display text-[clamp(1.35rem,1.7vw,1.65rem)] leading-[1.12]">
+                  {SITE.name}
+                </h3>
                 <p className="mt-1 text-sm text-gold">{SITE.role}</p>
                 <div className="mt-6 flex flex-col gap-3 text-[14px]">
                   <p className="flex items-center gap-3">
@@ -128,22 +131,22 @@ function FAQPage() {
                   <p className="text-white/70">{SITE.region}</p>
                 </div>
                 <div className="mt-6 flex flex-col gap-3">
-                  <a
+                  <EditorialButton
                     href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(SITE.mapsQuery)}`}
                     target="_blank"
                     rel="noreferrer"
-                    className="premium-cta inline-flex items-center gap-2 bg-gold px-6 py-3 text-[12px] uppercase tracking-[0.08em] text-navy hover:bg-gold-light"
+                    tone="peach"
                   >
-                    <MapPin className="h-4 w-4" /> Abrir no Maps
-                  </a>
-                  <a
+                    Abrir no Maps
+                  </EditorialButton>
+                  <EditorialButton
                     href={WHATSAPP_LINK()}
                     target="_blank"
                     rel="noreferrer"
-                    className="premium-cta inline-flex items-center gap-2 bg-whatsapp px-6 py-3 text-[12px] uppercase tracking-[0.08em] text-white hover:bg-[oklch(0.6_0.18_145)]"
+                    tone="whatsapp"
                   >
-                    <MessageCircle className="h-4 w-4" /> Falar no WhatsApp
-                  </a>
+                    Falar no WhatsApp
+                  </EditorialButton>
                 </div>
               </div>
             </div>

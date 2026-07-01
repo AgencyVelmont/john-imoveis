@@ -1,40 +1,77 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
+import { useMemo, useState } from "react";
+import type { LucideIcon } from "lucide-react";
 import {
-  MessageCircle,
   ArrowRight,
-  Search,
-  Handshake,
+  Bath,
+  BedDouble,
+  Building2,
   KeyRound,
-  ShieldCheck,
-  Clock,
   MapPin,
-  Award,
+  Maximize,
+  Scale,
+  Search,
+  ShieldCheck,
+  Sparkles,
 } from "lucide-react";
 import { SiteLayout } from "@/components/site/SiteLayout";
-import { SectionHeader } from "@/components/site/SectionHeader";
-import { PropertyCard } from "@/components/site/PropertyCard";
-import { fetchPublishedProperties } from "@/data/properties";
+import { EditorialButton } from "@/components/site/EditorialButton";
+import { fetchPublishedProperties, formatPrice, type Property } from "@/data/properties";
 import { DEFAULT_SITE_SETTINGS, fetchSiteSettings, WHATSAPP_LINK } from "@/lib/site";
-import felipe from "@/assets/felipe.webp";
-import heroBg from "@/assets/hero-bg.jpg";
+import johnCutout from "@/assets/john-cutout.png";
+import heroBackground from "@/assets/hero-mansion.jpg";
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Felipe Vasconcelos | Corretor de Imóveis em Santarém-PA" },
+      { title: "John Andrade | Corretor de Imóveis" },
       {
         name: "description",
         content:
-          "Casas, apartamentos e imóveis comerciais em Santarém-PA com atendimento personalizado. Encontre seu próximo imóvel com Felipe Vasconcelos.",
+          "Assessoria imobiliária com olhar jurídico, atendimento personalizado e negociações seguras com John Andrade.",
       },
     ],
   }),
   component: HomePage,
 });
 
+const methodItems: Array<{ icon: LucideIcon; title: string; text: string }> = [
+  {
+    icon: Scale,
+    title: "Análise jurídica",
+    text: "Documentos, riscos e condições da negociação revisados antes do avanço.",
+  },
+  {
+    icon: Building2,
+    title: "Curadoria",
+    text: "Imóveis e oportunidades filtrados conforme objetivo patrimonial.",
+  },
+  {
+    icon: KeyRound,
+    title: "Condução",
+    text: "Proposta, negociação e fechamento acompanhados com comunicação clara.",
+  },
+];
+
+const values: Array<{ icon: LucideIcon; label: string }> = [
+  { icon: ShieldCheck, label: "Integridade" },
+  { icon: Search, label: "Transparência" },
+  { icon: Sparkles, label: "Confiança" },
+  { icon: ArrowRight, label: "Excelência" },
+];
+
+type StateFilter = "PA" | "SC";
+
+const stateFilters: StateFilter[] = ["PA", "SC"];
+
 function HomePage() {
-  const { data: properties = [], isLoading } = useQuery({
+  const [activeFilter, setActiveFilter] = useState<StateFilter>("PA");
+  const {
+    data: properties = [],
+    isLoading,
+    isError,
+  } = useQuery({
     queryKey: ["published-properties"],
     queryFn: fetchPublishedProperties,
   });
@@ -42,232 +79,249 @@ function HomePage() {
     queryKey: ["site-settings"],
     queryFn: fetchSiteSettings,
   });
-  const featured = properties.filter((p) => p.featured).slice(0, 3);
-  const visibleProperties = featured.length > 0 ? featured : properties.slice(0, 3);
-  const authorityNumbers = [
-    { num: `+${site.propertiesCount}`, label: "Imóveis negociados" },
-    { num: `${site.experienceYears} anos`, label: "De mercado" },
-    site.clientsCount > 0
-      ? { num: `+${site.clientsCount}`, label: "Clientes atendidos" }
-      : { num: "100%", label: "Atendimento dedicado" },
-    ...(site.neighborhoodsCount > 0
-      ? [{ num: `+${site.neighborhoodsCount}`, label: "Bairros atendidos" }]
-      : []),
-  ];
+
+  const filteredProperties = useMemo(() => {
+    const list = properties.filter((property) => property.state === activeFilter);
+
+    return list.slice(0, 6);
+  }, [activeFilter, properties]);
 
   return (
     <SiteLayout>
-      {/* HERO */}
-      <section className="relative -mt-20 min-h-[100svh] overflow-hidden bg-gradient-navy">
-        <div
-          className="absolute inset-0 opacity-30"
-          style={{
-            backgroundImage: `url(${heroBg})`,
-            backgroundSize: "cover",
-            backgroundPosition: "center",
-            mixBlendMode: "luminosity",
-          }}
+      <section className="relative min-h-[100svh] overflow-hidden bg-deep-green text-white">
+        <img
+          src={heroBackground}
+          alt=""
+          className="absolute inset-0 h-full w-full object-cover"
+          aria-hidden="true"
         />
-        <div className="absolute inset-0 bg-gradient-to-r from-navy via-navy/85 to-navy/40" />
-        <div
-          className="pointer-events-none absolute right-[5%] top-1/2 hidden h-[600px] w-[600px] -translate-y-1/2 rounded-full md:block"
-          style={{
-            background: "radial-gradient(circle, oklch(0.76 0.09 80 / 0.15) 0%, transparent 70%)",
-          }}
-        />
+        <div className="image-veil" />
 
-        <div className="relative mx-auto grid min-h-[100svh] max-w-7xl items-center gap-12 px-6 pt-32 pb-20 md:px-12 lg:grid-cols-[1.2fr_1fr]">
-          <div className="max-w-2xl">
-            <span className="mb-8 inline-flex items-center gap-2 border border-gold/30 bg-gold/10 px-4 py-1.5 text-[11px] uppercase tracking-[0.15em] text-gold-light">
-              <span className="h-1.5 w-1.5 rounded-full bg-gold" />
-              Corretor de Imóveis · Santarém-PA
-            </span>
-            <h1 className="font-display text-[clamp(44px,6vw,80px)] font-light leading-[1.05] text-white">
-              Encontre o imóvel <em className="italic text-gold-light">ideal</em> com quem entende
-              de Santarém
+        <div className="relative mx-auto flex min-h-[100svh] max-w-[1480px] flex-col justify-end px-5 pb-12 pt-32 md:px-10 md:pb-16">
+          <div className="max-w-[720px]">
+            <p className="eyebrow text-peach">John Andrade · Corretor de Imóveis</p>
+            <h1 className="mt-6 max-w-[11ch] text-[clamp(2.7rem,5vw,5.5rem)] leading-[0.96] text-white">
+              Imóveis com leitura estratégica e negociação segura.
             </h1>
-            <p className="mt-7 max-w-xl text-[16px] leading-relaxed text-white/65">
-              Atendimento personalizado para compra, venda e locação. Casas, apartamentos,
-              coberturas e imóveis comerciais — selecionados com critério para você decidir com
-              confiança.
+            <p className="mt-6 max-w-md text-[clamp(0.92rem,1vw,1.05rem)] leading-[1.55] text-white/70">
+              Assessoria imobiliária com olhar jurídico e curadoria personalizada.
             </p>
-
-            <div className="mt-10 flex flex-wrap gap-4">
-              <Link
-                to="/imoveis"
-                className="premium-cta inline-flex items-center gap-2.5 bg-gold px-8 py-4 text-[13px] font-medium uppercase tracking-[0.08em] text-navy hover:bg-gold-light"
-              >
-                Ver imóveis <ArrowRight className="h-4 w-4" />
-              </Link>
-              <a
+            <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:gap-4">
+              <EditorialButton to="/imoveis">Ver portfólio</EditorialButton>
+              <EditorialButton
                 href={WHATSAPP_LINK(site.whatsappMessage, site.whatsappNumber)}
                 target="_blank"
                 rel="noreferrer"
-                className="premium-cta inline-flex items-center gap-2.5 border border-white/30 px-8 py-4 text-[13px] uppercase tracking-[0.08em] text-white hover:border-gold hover:text-gold"
+                tone="white"
               >
-                <MessageCircle className="h-4 w-4" /> Falar no WhatsApp
-              </a>
+                Atendimento direto
+              </EditorialButton>
             </div>
+          </div>
+        </div>
+      </section>
 
-            <div className="mt-14 flex flex-wrap gap-x-12 gap-y-6">
-              {authorityNumbers.map((s) => (
-                <div key={s.label} className="flex flex-col gap-1">
-                  <span className="font-display text-[32px] font-light leading-none text-white">
-                    {s.num}
+      <section className="bg-warm-gray px-5 py-20 md:px-10">
+        <div className="mx-auto max-w-[1480px]">
+          <div className="flex flex-col gap-7 border-b border-deep-green/10 pb-6 lg:flex-row lg:items-end lg:justify-between">
+            <div>
+              <p className="eyebrow">Encontre o seu</p>
+              <h2 className="mt-4 text-[clamp(2rem,3.5vw,4rem)] leading-[1] text-deep-green">
+                Curadoria em formato de catálogo.
+              </h2>
+              <div className="mt-6 space-y-3 text-sm leading-[1.45] text-deep-green/68">
+                <p>
+                  <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-sage">
+                    Atuação
                   </span>
-                  <span className="text-[11px] uppercase tracking-[0.12em] text-white/50">
-                    {s.label}
+                  <br />
+                  {site.region}
+                </p>
+                <p>
+                  <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-sage">
+                    Especialidade
                   </span>
+                  <br />
+                  Compra, venda, locação e investimento
+                </p>
+              </div>
+            </div>
+            <div className="flex w-full flex-wrap items-center gap-3 lg:w-auto lg:justify-end">
+              {stateFilters.map((state) => {
+                const active = activeFilter === state;
+
+                return (
+                  <button
+                    key={state}
+                    type="button"
+                    aria-pressed={active}
+                    onClick={() => setActiveFilter(state)}
+                    className={`editorial-button inline-flex h-11 min-w-24 items-center justify-center px-6 text-[12px] font-bold uppercase tracking-[0.18em] transition md:h-12 md:min-w-28 ${
+                      active
+                        ? "bg-deep-green text-white shadow-elegant-sm"
+                        : "border border-deep-green/18 bg-off-white text-deep-green hover:border-peach hover:text-sage"
+                    }`}
+                  >
+                    {state}
+                  </button>
+                );
+              })}
+              <EditorialButton to="/imoveis" tone="green" className="h-11 px-6 py-0 md:h-12">
+                Buscar imóvel
+              </EditorialButton>
+            </div>
+          </div>
+
+          <div className="mt-5 flex items-center justify-between gap-4">
+            <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-sage">
+              {isLoading
+                ? "Carregando curadoria"
+                : `${filteredProperties.length} ${
+                    filteredProperties.length === 1 ? "resultado" : "resultados"
+                  } em ${activeFilter}`}
+            </p>
+          </div>
+
+          {isError && (
+            <div className="mt-8 border border-deep-green/14 bg-off-white px-5 py-4 text-sm text-deep-green">
+              Não foi possível carregar os imóveis em destaque.
+            </div>
+          )}
+
+          <div className="mt-8 grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+            {isLoading ? (
+              Array.from({ length: 6 }).map((_, index) => (
+                <div key={index} className="h-[480px] animate-pulse bg-off-white/70" />
+              ))
+            ) : filteredProperties.length > 0 ? (
+              filteredProperties.map((property) => (
+                <FeaturedPropertyCard key={property.id} property={property} />
+              ))
+            ) : (
+              <div className="border border-deep-green/14 bg-off-white px-6 py-12 text-sm text-deep-green/68 md:col-span-2 xl:col-span-3">
+                Nenhum imóvel encontrado em {activeFilter} no momento.
+              </div>
+            )}
+          </div>
+
+          <EditorialButton to="/imoveis" tone="green" className="mt-10">
+            Veja mais imóveis
+          </EditorialButton>
+        </div>
+      </section>
+
+      <section className="relative z-20 -mt-px overflow-visible bg-deep-green px-5 py-24 text-white md:px-10">
+        <div className="pointer-events-none absolute bottom-0 right-8 z-10 hidden h-[calc(100%+28px)] w-[30%] opacity-95 md:h-[calc(100%+18px)] lg:block xl:right-12 xl:h-[calc(100%+44px)]">
+          <img
+            src={johnCutout}
+            alt=""
+            className="h-full w-full origin-bottom scale-[1.08] object-contain object-bottom"
+          />
+        </div>
+        <div className="relative z-20 mx-auto grid max-w-[1480px] gap-12 lg:grid-cols-[0.65fr_0.35fr]">
+          <div>
+            <p className="eyebrow text-peach">Método</p>
+            <h2 className="mt-5 max-w-5xl text-[clamp(2rem,3.5vw,4rem)] leading-[1]">
+              Discrição visual. Precisão na negociação.
+            </h2>
+            <div className="mt-12 grid gap-px bg-white/12 md:grid-cols-3">
+              {methodItems.map((item) => (
+                <div key={item.title} className="bg-deep-green p-7">
+                  <item.icon className="h-7 w-7 text-peach" />
+                  <h3 className="mt-7 text-[clamp(1.35rem,1.8vw,1.75rem)] leading-[1.12] text-white">
+                    {item.title}
+                  </h3>
+                  <p className="mt-4 text-[clamp(0.9rem,0.95vw,1rem)] leading-[1.6] text-white/62">
+                    {item.text}
+                  </p>
                 </div>
               ))}
             </div>
           </div>
-
-          <div className="relative hidden h-full min-h-[680px] items-end justify-end lg:flex">
-            <div className="relative -mb-28 translate-x-20 xl:translate-x-32">
-              <div className="absolute bottom-14 right-0 h-80 w-80 border-2 border-gold" />
-              <img
-                src={felipe}
-                alt="Felipe Vasconcelos"
-                className="relative z-10 h-[780px] w-auto origin-bottom-right scale-[1.33] object-contain object-bottom drop-shadow-[0_30px_50px_oklch(0_0_0/0.5)] xl:h-[840px]"
-              />
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* DESTAQUES */}
-      <section className="bg-off-white px-6 py-24 md:px-12">
-        <div className="mx-auto max-w-7xl">
-          <div className="mb-12 flex flex-wrap items-end justify-between gap-6">
-            <SectionHeader
-              tag="Seleção"
-              title="Imóveis em"
-              titleEm="destaque"
-              subtitle="Uma curadoria atual dos melhores imóveis disponíveis em Santarém e região."
-            />
-            <Link
-              to="/imoveis"
-              className="inline-flex items-center gap-2 text-[12px] uppercase tracking-[0.1em] text-navy hover:text-gold"
-            >
-              Ver todos <ArrowRight className="h-4 w-4" />
-            </Link>
-          </div>
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {isLoading
-              ? Array.from({ length: 3 }).map((_, index) => (
-                  <div key={index} className="h-[460px] animate-pulse bg-white shadow-elegant-sm" />
-                ))
-              : visibleProperties.map((p) => <PropertyCard key={p.id} property={p} />)}
-          </div>
-        </div>
-      </section>
-
-      {/* COMO FUNCIONA */}
-      <section className="bg-white px-6 py-24 md:px-12">
-        <div className="mx-auto max-w-7xl">
-          <SectionHeader
-            tag="O método"
-            title="Como funciona o"
-            titleEm="atendimento"
-            subtitle="Um processo simples, transparente e focado em fazer você economizar tempo e tomar a decisão certa."
-            align="center"
-          />
-          <div className="mt-16 grid gap-8 md:grid-cols-3">
-            {[
-              {
-                icon: Search,
-                title: "1. Entender você",
-                text: "Conversamos sobre objetivos, orçamento, prazo e o estilo de vida que você busca.",
-              },
-              {
-                icon: Handshake,
-                title: "2. Selecionar e visitar",
-                text: "Apresento opções alinhadas ao seu perfil e organizo visitas sem stress.",
-              },
-              {
-                icon: KeyRound,
-                title: "3. Fechar com segurança",
-                text: "Conduzo proposta, documentação e financiamento até a entrega das chaves.",
-              },
-            ].map((step) => (
+          <div className="grid content-end gap-3 lg:-translate-x-20 lg:pb-8 xl:-translate-x-24">
+            {values.map((item) => (
               <div
-                key={step.title}
-                className="premium-reflect border border-border bg-off-white p-10 text-center transition-all duration-300 hover:-translate-y-1 hover:shadow-elegant-md"
+                key={item.label}
+                className="flex items-center gap-4 border-b border-white/12 py-5"
               >
-                <div className="mx-auto mb-6 flex h-14 w-14 items-center justify-center bg-navy text-gold">
-                  <step.icon className="h-6 w-6" />
-                </div>
-                <h3 className="font-display text-2xl font-normal text-navy">{step.title}</h3>
-                <p className="mt-3 text-[14px] leading-relaxed text-muted-foreground">
-                  {step.text}
-                </p>
+                <item.icon className="h-5 w-5 text-peach" />
+                <span className="text-[12px] font-bold uppercase tracking-[0.2em] text-white/82">
+                  {item.label}
+                </span>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* DIFERENCIAIS */}
-      <section className="bg-off-white px-6 py-24 md:px-12">
-        <div className="mx-auto max-w-7xl">
-          <SectionHeader tag="Diferenciais" title="Por que trabalhar" titleEm="comigo" />
-          <div className="grid gap-px bg-border md:grid-cols-2 lg:grid-cols-4">
-            {[
-              {
-                icon: ShieldCheck,
-                title: "Confiança",
-                text: "Transparência em cada etapa, do primeiro contato à assinatura.",
-              },
-              {
-                icon: Clock,
-                title: "Agilidade",
-                text: "Respostas rápidas e processos otimizados para você não perder tempo.",
-              },
-              {
-                icon: MapPin,
-                title: "Conhecimento local",
-                text: "Profundo entendimento dos bairros e do mercado de Santarém-PA.",
-              },
-              {
-                icon: Award,
-                title: "Atendimento premium",
-                text: "Cada cliente é tratado de forma exclusiva, do início ao pós-venda.",
-              },
-            ].map((d) => (
-              <div
-                key={d.title}
-                className="premium-reflect bg-white p-10 transition-all duration-300 hover:-translate-y-1 hover:shadow-elegant-md"
-              >
-                <d.icon className="mb-5 h-8 w-8 text-gold" />
-                <h3 className="font-display text-2xl font-normal text-navy">{d.title}</h3>
-                <p className="mt-2.5 text-[14px] leading-relaxed text-muted-foreground">{d.text}</p>
-              </div>
-            ))}
+      <section className="bg-peach px-5 py-20 text-deep-green md:px-10">
+        <div className="mx-auto flex max-w-[1480px] flex-col items-start gap-8 md:flex-row md:items-end md:justify-between">
+          <div>
+            <p className="eyebrow text-deep-green/70">Próximo passo</p>
+            <h2 className="mt-4 max-w-5xl text-[clamp(2rem,3.5vw,4rem)] leading-[1]">
+              Vamos avaliar o melhor caminho para o seu imóvel?
+            </h2>
           </div>
-        </div>
-      </section>
-
-      {/* CTA WHATSAPP */}
-      <section className="relative overflow-hidden bg-gradient-navy px-6 py-24 text-center md:px-12">
-        <div className="relative mx-auto max-w-3xl">
-          <h2 className="font-display text-[clamp(36px,4vw,56px)] font-light text-white">
-            Pronto para encontrar seu <em className="italic text-gold-light">próximo imóvel</em>?
-          </h2>
-          <p className="mt-5 text-[16px] text-white/60">
-            Fale comigo agora pelo WhatsApp. Vou entender o que você procura e te enviar as melhores
-            opções disponíveis em {site.region}.
-          </p>
-          <a
+          <EditorialButton
             href={WHATSAPP_LINK(site.whatsappMessage, site.whatsappNumber)}
             target="_blank"
             rel="noreferrer"
-            className="premium-cta mt-10 inline-flex items-center gap-3 bg-whatsapp px-10 py-4 text-[14px] font-medium uppercase tracking-[0.08em] text-white hover:bg-[oklch(0.6_0.18_145)]"
+            tone="green"
+            className="shrink-0"
           >
-            <MessageCircle className="h-5 w-5" /> Falar no WhatsApp
-          </a>
+            Conversar agora
+          </EditorialButton>
         </div>
       </section>
     </SiteLayout>
+  );
+}
+
+function FeaturedPropertyCard({ property }: { property: Property }) {
+  return (
+    <Link
+      to="/imoveis/$propertyId"
+      params={{ propertyId: property.id }}
+      className="group relative min-h-[480px] overflow-hidden bg-deep-green text-white md:min-h-[560px]"
+    >
+      <img
+        src={property.image}
+        alt={property.title}
+        className="absolute inset-0 h-full w-full object-cover transition duration-700 group-hover:scale-[1.04]"
+      />
+      <div className="image-veil" />
+      <div className="absolute inset-x-0 bottom-0 p-5 md:p-7">
+        <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-peach">
+          {property.type} · {property.purpose}
+        </p>
+        <h3 className="mt-3 text-[clamp(1.45rem,2.4vw,2.35rem)] leading-[1.02]">
+          {property.title}
+        </h3>
+        <p className="mt-4 flex items-center gap-2 text-sm text-white/74">
+          <MapPin className="h-4 w-4 text-peach" />
+          {property.city}
+          {property.state ? `, ${property.state}` : ""}
+        </p>
+
+        <div className="mt-6 grid gap-3 border-t border-white/16 pt-5 text-xs text-white/78 sm:grid-cols-2">
+          <span className="flex items-center gap-2">
+            <BedDouble className="h-4 w-4 text-peach" /> {property.bedrooms} quartos
+          </span>
+          <span className="flex items-center gap-2">
+            <Bath className="h-4 w-4 text-peach" /> {property.bathrooms} banheiros
+          </span>
+          <span className="flex items-center gap-2">
+            <Maximize className="h-4 w-4 text-peach" /> Terreno {property.total_area} m²
+          </span>
+          <span className="font-semibold text-white">
+            {formatPrice(property.price, property.purpose)}
+          </span>
+        </div>
+
+        <span className="mt-6 inline-flex border border-peach px-4 py-2 text-[11px] font-bold uppercase tracking-[0.16em] text-peach transition group-hover:bg-peach group-hover:text-deep-green">
+          Ver imóvel
+        </span>
+      </div>
+    </Link>
   );
 }

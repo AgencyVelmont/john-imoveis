@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://felipecorretor.com.br/sitemap.xml
+Sitemap: https://johnandradecorretor.com.br/sitemap.xml

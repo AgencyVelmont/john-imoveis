@@ -7,7 +7,7 @@ const organizationSchema = {
   "@type": "RealEstateAgent",
   name: SITE.name,
   description:
-    "Corretor de imóveis em Santarém-PA com atendimento personalizado para compra, venda e locação.",
+    "Corretor de imóveis com atendimento personalizado, visão jurídica e foco em segurança nas transações.",
   telephone: SITE.phone,
   email: SITE.email,
   address: {
@@ -33,7 +33,9 @@ function NotFoundComponent() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="max-w-md text-center">
-        <h1 className="text-7xl font-bold text-foreground">404</h1>
+        <h1 className="text-[clamp(2.5rem,5vw,4.5rem)] font-bold leading-[1] text-foreground">
+          404
+        </h1>
         <h2 className="mt-4 text-xl font-semibold text-foreground">Página não encontrada</h2>
         <p className="mt-2 text-sm text-muted-foreground">
           A página que você procura não existe ou foi movida.
@@ -93,24 +95,23 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Felipe Vasconcelos | Corretor de Imóveis em Santarém-PA" },
+      { title: "John Andrade | Corretor de Imóveis" },
       {
         name: "description",
         content:
-          "Felipe Vasconcelos: corretor de imóveis em Santarém-PA. Casas, apartamentos, coberturas e imóveis comerciais para venda e locação.",
+          "John Andrade: corretor de imóveis com assessoria jurídica-imobiliária, atendimento personalizado e curadoria de bons negócios.",
       },
       { name: "author", content: SITE.name },
       { name: "robots", content: "index, follow, max-image-preview:large" },
-      { property: "og:title", content: "Felipe Vasconcelos | Corretor de Imóveis" },
+      { property: "og:title", content: "John Andrade | Corretor de Imóveis" },
       {
         property: "og:description",
-        content:
-          "Encontre o imóvel ideal em Santarém-PA com atendimento premium, WhatsApp direto e curadoria personalizada.",
+        content: "Negócios imobiliários com segurança, tecnologia e atendimento personalizado.",
       },
       { property: "og:type", content: "website" },
       { property: "og:url", content: SITE.siteUrl },
       { property: "og:locale", content: "pt_BR" },
-      { property: "og:site_name", content: "Felipe Vasconcelos Imóveis" },
+      { property: "og:site_name", content: "John Andrade Corretor de Imóveis" },
       { property: "og:image", content: `${SITE.siteUrl}/og-image.jpg` },
       { name: "telephone", content: SITE.phone },
       { name: "twitter:card", content: "summary_large_image" },

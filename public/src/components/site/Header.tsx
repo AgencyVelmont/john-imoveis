@@ -1,20 +1,20 @@
 import { Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
-import { Instagram, MessageCircle, Menu, X } from "lucide-react";
-import logo from "@/assets/logo-felipe.png";
+import { Instagram, Menu, MessageCircle, X } from "lucide-react";
+import logo from "@/assets/brand/john-logo-horizontal-light.png";
 import { DEFAULT_SITE_SETTINGS, fetchSiteSettings, WHATSAPP_LINK } from "@/lib/site";
 
 const navItems = [
-  { to: "/", label: "Início" },
-  { to: "/imoveis", label: "Imóveis" },
-  { to: "/sobre", label: "Sobre" },
+  { to: "/", label: "Inicio" },
+  { to: "/imoveis", label: "Portfólio" },
+  { to: "/sobre", label: "John" },
   { to: "/contato", label: "Contato" },
-  { to: "/faq", label: "FAQ" },
+  { to: "/faq", label: "Dúvidas" },
 ] as const;
 
 export function Header() {
-  const [scrolled, setScrolled] = useState(false);
+  const [compact, setCompact] = useState(false);
   const [open, setOpen] = useState(false);
   const { data: site = DEFAULT_SITE_SETTINGS } = useQuery({
     queryKey: ["site-settings"],
@@ -22,7 +22,7 @@ export function Header() {
   });
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 24);
+    const onScroll = () => setCompact(window.scrollY > 18);
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
@@ -30,31 +30,33 @@ export function Header() {
 
   return (
     <header
+      data-site-header
       className={`fixed inset-x-0 top-0 z-50 transition-all duration-300 ${
-        scrolled ? "h-16" : "h-20"
+        compact ? "px-0 pt-0" : "px-3 pt-3 md:px-6"
       }`}
-      style={{
-        background: scrolled ? "oklch(0.2 0.04 255 / 0.98)" : "oklch(0.2 0.04 255 / 0.94)",
-        backdropFilter: "blur(20px)",
-        borderBottom: "1px solid oklch(0.76 0.09 80 / 0.15)",
-      }}
     >
-      <div className="mx-auto flex h-full max-w-7xl items-center justify-between px-6 md:px-12">
+      <div
+        className={`john-nav mx-auto flex max-w-[1480px] items-center justify-between px-4 transition-all duration-300 md:px-7 ${
+          compact ? "is-compact h-14 md:h-[3.75rem]" : "h-20"
+        }`}
+      >
         <Link to="/" className="flex items-center" aria-label="Página inicial">
           <img
             src={logo}
-            alt="Felipe Vasconcelos — Corretor de Imóveis"
-            className="h-10 w-auto object-contain md:h-11"
+            alt="John Andrade Corretor de Imóveis"
+            className={`w-auto object-contain transition-all duration-300 ${
+              compact ? "h-11 md:h-12" : "h-[3.25rem] md:h-[3.75rem]"
+            }`}
           />
         </Link>
 
-        <nav className="hidden items-center gap-9 lg:flex">
+        <nav className="hidden items-center gap-7 lg:flex">
           {navItems.map((item) => (
             <Link
               key={item.to}
               to={item.to}
-              className="text-[13px] uppercase tracking-[0.08em] text-white/75 transition-colors hover:text-gold-light"
-              activeProps={{ className: "text-gold-light" }}
+              className="text-[clamp(0.76rem,0.85vw,0.88rem)] font-semibold uppercase tracking-[0.15em] text-white/74 transition-colors hover:text-peach"
+              activeProps={{ className: "text-peach" }}
               activeOptions={{ exact: item.to === "/" }}
             >
               {item.label}
@@ -62,13 +64,13 @@ export function Header() {
           ))}
         </nav>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           <a
             href={site.instagram}
             target="_blank"
             rel="noreferrer"
             aria-label="Instagram"
-            className="hidden h-10 w-10 items-center justify-center border border-white/15 text-white/75 transition-all hover:-translate-y-0.5 hover:border-gold/70 hover:text-gold-light md:inline-flex"
+            className="hidden h-10 w-10 items-center justify-center rounded-[2px] border border-white/15 text-white/75 transition hover:border-peach hover:text-peach md:inline-flex"
           >
             <Instagram className="h-4 w-4" />
           </a>
@@ -76,52 +78,43 @@ export function Header() {
             href={WHATSAPP_LINK(site.whatsappMessage, site.whatsappNumber)}
             target="_blank"
             rel="noreferrer"
-            className="premium-cta hidden items-center gap-2 bg-gold px-5 py-2.5 text-[12px] font-medium uppercase tracking-[0.1em] text-navy hover:bg-gold-light md:inline-flex"
+            className="hidden h-11 items-center gap-2 px-2 text-[clamp(0.76rem,0.85vw,0.88rem)] font-semibold uppercase tracking-[0.12em] text-white transition hover:text-peach md:inline-flex"
           >
-            <MessageCircle className="h-4 w-4" />
-            WhatsApp
+            Atendimento <span aria-hidden="true">→</span>
           </a>
           <button
             type="button"
-            className="text-white lg:hidden"
-            onClick={() => setOpen((v) => !v)}
-            aria-label="Abrir menu"
+            className="flex h-10 w-10 items-center justify-center rounded-[2px] border border-white/15 text-white lg:hidden"
+            onClick={() => setOpen((value) => !value)}
+            aria-label={open ? "Fechar menu" : "Abrir menu"}
           >
-            {open ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+            {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </button>
         </div>
       </div>
 
       {open && (
-        <div className="border-t border-white/10 bg-navy px-6 py-6 lg:hidden">
-          <nav className="flex flex-col gap-4">
+        <div className="john-mobile-menu mx-auto mt-2 max-w-[1480px] px-5 py-5 lg:hidden">
+          <nav className="grid gap-2">
             {navItems.map((item) => (
               <Link
                 key={item.to}
                 to={item.to}
                 onClick={() => setOpen(false)}
-                className="text-sm uppercase tracking-[0.1em] text-white/80"
-                activeProps={{ className: "text-gold-light" }}
+                className="rounded-[2px] px-4 py-3 text-sm uppercase tracking-[0.14em] text-white/78"
+                activeProps={{ className: "bg-white text-deep-green" }}
                 activeOptions={{ exact: item.to === "/" }}
               >
                 {item.label}
               </Link>
             ))}
             <a
-              href={site.instagram}
-              target="_blank"
-              rel="noreferrer"
-              className="flex items-center gap-2 text-sm uppercase tracking-[0.1em] text-white/80"
-            >
-              <Instagram className="h-4 w-4 text-gold" /> Instagram
-            </a>
-            <a
               href={WHATSAPP_LINK(site.whatsappMessage, site.whatsappNumber)}
               target="_blank"
               rel="noreferrer"
-              className="premium-cta mt-2 inline-flex w-fit items-center gap-2 bg-gold px-5 py-2.5 text-[12px] font-medium uppercase tracking-[0.1em] text-navy"
+              className="mt-2 inline-flex w-fit items-center gap-2 rounded-[2px] bg-peach px-5 py-3 text-[12px] font-semibold uppercase tracking-[0.14em] text-deep-green"
             >
-              <MessageCircle className="h-4 w-4" /> WhatsApp
+              <MessageCircle className="h-4 w-4" /> Atendimento
             </a>
           </nav>
         </div>

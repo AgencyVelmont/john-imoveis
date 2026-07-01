@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Outlet, useRouterState } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
+import type { ReactNode } from "react";
 import { useMemo, useState } from "react";
 import { SiteLayout } from "@/components/site/SiteLayout";
 import { PropertyCard } from "@/components/site/PropertyCard";
@@ -9,11 +10,11 @@ import { fetchPublishedProperties, PropertyType, Operation } from "@/data/proper
 export const Route = createFileRoute("/imoveis")({
   head: () => ({
     meta: [
-      { title: "Imóveis em Santarém-PA | Felipe Vasconcelos" },
+      { title: "Imóveis | John Andrade" },
       {
         name: "description",
         content:
-          "Casas, apartamentos, coberturas e imóveis comerciais para venda e locação em Santarém-PA.",
+          "Casas, apartamentos, imóveis comerciais e oportunidades de investimento com curadoria de John Andrade.",
       },
     ],
   }),
@@ -21,6 +22,7 @@ export const Route = createFileRoute("/imoveis")({
 });
 
 const opOptions: ("Todos" | Operation)[] = ["Todos", "Venda", "Aluguel"];
+const stateOptions = ["Todos", "PA", "SC"] as const;
 const typeOptions: ("Todos" | PropertyType)[] = [
   "Todos",
   "Casa",
@@ -32,6 +34,7 @@ const typeOptions: ("Todos" | PropertyType)[] = [
 function ImoveisPage() {
   const pathname = useRouterState({ select: (state) => state.location.pathname });
   const [op, setOp] = useState<(typeof opOptions)[number]>("Todos");
+  const [state, setState] = useState<(typeof stateOptions)[number]>("Todos");
   const [type, setType] = useState<(typeof typeOptions)[number]>("Todos");
   const [neighborhood, setNeighborhood] = useState("Todos");
   const {
@@ -53,10 +56,11 @@ function ImoveisPage() {
       properties.filter(
         (p) =>
           (op === "Todos" || p.operation === op) &&
+          (state === "Todos" || p.state === state) &&
           (type === "Todos" || p.type === type) &&
           (neighborhood === "Todos" || p.neighborhood === neighborhood),
       ),
-    [op, type, neighborhood, properties],
+    [op, state, type, neighborhood, properties],
   );
 
   if (pathname !== "/imoveis") {
@@ -65,23 +69,27 @@ function ImoveisPage() {
 
   return (
     <SiteLayout>
-      <section className="bg-gradient-navy px-6 py-20 text-white md:px-12">
-        <div className="mx-auto max-w-7xl">
-          <span className="eyebrow text-gold-light">Portfólio</span>
-          <h1 className="mt-3 font-display text-[clamp(38px,5vw,64px)] font-light leading-tight">
-            Imóveis em <em className="italic text-gold-light">Santarém-PA</em>
-          </h1>
-          <p className="mt-4 max-w-2xl text-[15px] text-white/65">
-            Use os filtros abaixo para encontrar o imóvel que combina com você. Atualizado
-            regularmente.
+      <section className="relative overflow-hidden bg-deep-green px-5 py-16 text-white md:px-10 md:py-20">
+        <div className="absolute inset-0 opacity-[0.08]">
+          <div className="john-mark absolute -bottom-12 left-6">JA</div>
+        </div>
+        <div className="relative mx-auto grid max-w-[1480px] gap-8 border-b border-white/14 pb-10 lg:grid-cols-[0.8fr_1.2fr] lg:items-end">
+          <div>
+            <span className="eyebrow text-peach">Portfólio</span>
+            <h1 className="mt-5 text-[clamp(2.4rem,5vw,5rem)] leading-[0.95]">
+              Curadoria de imóveis.
+            </h1>
+          </div>
+          <p className="max-w-2xl text-[clamp(0.95rem,1vw,1.08rem)] leading-[1.6] text-white/64">
+            Filtros objetivos para encontrar oportunidades alinhadas ao seu momento: morar,
+            investir, vender ou reposicionar patrimônio.
           </p>
         </div>
       </section>
 
-      {/* FILTROS */}
-      <section className="border-b border-border bg-secondary px-6 py-6 md:px-12">
-        <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-3">
-          <span className="mr-2 text-[11px] uppercase tracking-[0.1em] text-muted-foreground">
+      <section className="bg-warm-gray px-5 py-8 md:px-10">
+        <div className="mx-auto flex max-w-[1480px] flex-wrap items-center gap-3 border border-deep-green/12 bg-off-white p-4">
+          <span className="mr-2 text-[11px] font-bold uppercase tracking-[0.16em] text-sage">
             Operação
           </span>
           {opOptions.map((o) => (
@@ -89,7 +97,15 @@ function ImoveisPage() {
               {o}
             </Chip>
           ))}
-          <span className="ml-4 mr-2 text-[11px] uppercase tracking-[0.1em] text-muted-foreground">
+          <span className="ml-4 mr-2 text-[11px] font-bold uppercase tracking-[0.16em] text-sage">
+            UF
+          </span>
+          {stateOptions.map((option) => (
+            <Chip key={option} active={state === option} onClick={() => setState(option)}>
+              {option}
+            </Chip>
+          ))}
+          <span className="ml-4 mr-2 text-[11px] font-bold uppercase tracking-[0.16em] text-sage">
             Tipo
           </span>
           {typeOptions.map((t) => (
@@ -98,13 +114,13 @@ function ImoveisPage() {
             </Chip>
           ))}
           <div className="ml-auto flex items-center gap-2">
-            <span className="text-[11px] uppercase tracking-[0.1em] text-muted-foreground">
+            <span className="text-[11px] font-bold uppercase tracking-[0.16em] text-sage">
               Bairro
             </span>
             <select
               value={neighborhood}
               onChange={(e) => setNeighborhood(e.target.value)}
-              className="border border-border bg-white px-3 py-2 text-[13px] text-navy outline-none focus:border-navy"
+              className="border border-deep-green/15 bg-white px-4 py-3 text-[13px] text-deep-green outline-none focus:border-peach"
             >
               {neighborhoods.map((n) => (
                 <option key={n}>{n}</option>
@@ -114,35 +130,37 @@ function ImoveisPage() {
         </div>
       </section>
 
-      <section className="bg-off-white px-6 py-20 md:px-12">
-        <div className="mx-auto max-w-7xl">
-          <p className="mb-8 text-[13px] uppercase tracking-[0.1em] text-muted-foreground">
+      <section className="bg-off-white px-5 py-16 md:px-10">
+        <div className="mx-auto max-w-[1480px]">
+          <p className="mb-8 text-[12px] font-bold uppercase tracking-[0.16em] text-sage">
             {isLoading
               ? "Carregando imóveis"
               : `${filtered.length} ${filtered.length === 1 ? "imóvel encontrado" : "imóveis encontrados"}`}
           </p>
           {isError ? (
-            <div className="border border-dashed border-border bg-white p-16 text-center">
-              <p className="font-display text-2xl text-navy">
+            <div className="border border-dashed border-deep-green/20 bg-white/70 p-16 text-center">
+              <p className="text-[clamp(1.35rem,1.7vw,1.65rem)] leading-[1.12] text-deep-green">
                 Não foi possível carregar os imóveis
               </p>
               <p className="mt-2 text-muted-foreground">Tente novamente em alguns instantes.</p>
             </div>
           ) : isLoading ? (
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
               {Array.from({ length: 6 }).map((_, index) => (
-                <div key={index} className="h-[460px] animate-pulse bg-white shadow-elegant-sm" />
+                <div key={index} className="h-[520px] animate-pulse bg-white/70" />
               ))}
             </div>
           ) : filtered.length === 0 ? (
-            <div className="border border-dashed border-border bg-white p-16 text-center">
-              <p className="font-display text-2xl text-navy">Nenhum imóvel encontrado</p>
+            <div className="border border-dashed border-deep-green/20 bg-white/70 p-16 text-center">
+              <p className="text-[clamp(1.35rem,1.7vw,1.65rem)] leading-[1.12] text-deep-green">
+                Nenhum imóvel encontrado
+              </p>
               <p className="mt-2 text-muted-foreground">
                 Tente ajustar os filtros para ver mais opções.
               </p>
             </div>
           ) : (
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
               {filtered.map((p) => (
                 <PropertyCard key={p.id} property={p} />
               ))}
@@ -161,16 +179,16 @@ function Chip({
 }: {
   active: boolean;
   onClick: () => void;
-  children: React.ReactNode;
+  children: ReactNode;
 }) {
   return (
     <button
       type="button"
       onClick={onClick}
-      className={`border px-4 py-2 text-[12px] transition-colors ${
+      className={`border px-4 py-2.5 text-[clamp(0.75rem,0.85vw,0.86rem)] font-semibold transition-colors ${
         active
-          ? "border-navy bg-navy text-white"
-          : "border-border bg-white text-muted-foreground hover:border-navy hover:text-navy"
+          ? "border-deep-green bg-deep-green text-white"
+          : "border-deep-green/15 bg-white text-sage hover:border-peach hover:text-deep-green"
       }`}
     >
       {children}
