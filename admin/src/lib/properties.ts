@@ -23,6 +23,7 @@ export type Property = {
   parking_spaces: number | null;
   status: PropertyStatus;
   featured: boolean | null;
+  investment_opportunity: boolean | null;
   internal_notes: string | null;
   published_at: string | null;
   created_at: string | null;
@@ -47,6 +48,7 @@ export type PropertyFormValues = {
   state: string;
   status: PropertyStatus;
   featured: boolean;
+  investmentOpportunity: boolean;
   internalNotes: string | null;
 };
 
@@ -72,6 +74,7 @@ export function readPropertyForm(
     state: toText(formData.get("state")) ?? "PA",
     status: (toText(formData.get("status")) ?? fallbackStatus) as PropertyStatus,
     featured: formData.get("featured") === "on",
+    investmentOpportunity: formData.get("investment_opportunity") === "on",
     internalNotes: toText(formData.get("internal_notes")),
   };
 }
@@ -109,6 +112,7 @@ export function buildPropertyPayload(values: PropertyFormValues, status: Propert
     state: values.state || "PA",
     status,
     featured: values.featured,
+    investment_opportunity: values.investmentOpportunity,
     internal_notes: values.internalNotes,
     updated_at: now,
   };
