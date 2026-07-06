@@ -1,14 +1,14 @@
 <?php
 
 const IMOVEL_IMAGE_MAX_BYTES = 12 * 1024 * 1024;
-const SUPABASE_PUBLIC_URL_FALLBACK = 'https://bxzdfhbgkzgnlvdrgoal.supabase.co';
-const SUPABASE_PUBLISHABLE_KEY_FALLBACK = 'sb_publishable_iec5AmOnY7iPGceyA453lQ_mFkCSO_k';
+const SUPABASE_PUBLIC_URL_FALLBACK = 'https://pjjthabtauoymeboemol.supabase.co';
+const SUPABASE_PUBLISHABLE_KEY_FALLBACK = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBqanRoYWJ0YXVveW1lYm9lbW9sIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIzODk5MTIsImV4cCI6MjA5Nzk2NTkxMn0.eDdSmmbQcyke1ewh-YVc6I8sWtDRWl50YmOs5JJqU4o';
 
 function send_cors_headers(): void {
   $origin = (string) ($_SERVER['HTTP_ORIGIN'] ?? '');
   $allowedOrigins = [
-    'https://admin.felipecorretor.com.br',
-    'https://felipecorretor.com.br',
+    'https://admin.johnandradecorretor.com.br',
+    'https://johnandradecorretor.com.br',
   ];
 
   if (in_array($origin, $allowedOrigins, true)) {
@@ -47,7 +47,7 @@ function require_post(): void {
 function require_authenticated_user(): void {
   $supabaseUrl = getenv('SUPABASE_URL') ?: getenv('VITE_SUPABASE_URL') ?: SUPABASE_PUBLIC_URL_FALLBACK;
   $supabaseAnonKey = getenv('SUPABASE_ANON_KEY') ?: getenv('VITE_SUPABASE_ANON_KEY') ?: SUPABASE_PUBLISHABLE_KEY_FALLBACK;
-  $authorization = $_SERVER['HTTP_AUTHORIZATION'] ?? '';
+  $authorization = authorization_header();
 
   if ($supabaseUrl === '' || $supabaseAnonKey === '') {
     json_response(500, ['ok' => false, 'message' => 'Supabase environment is not configured']);
@@ -76,6 +76,28 @@ function require_authenticated_user(): void {
   if ($status < 200 || $status >= 300) {
     json_response(401, ['ok' => false, 'message' => 'Unauthorized']);
   }
+}
+
+function authorization_header(): string {
+  foreach (['HTTP_AUTHORIZATION', 'REDIRECT_HTTP_AUTHORIZATION', 'Authorization'] as $key) {
+    $value = $_SERVER[$key] ?? '';
+
+    if (is_string($value) && trim($value) !== '') {
+      return trim($value);
+    }
+  }
+
+  if (function_exists('apache_request_headers')) {
+    $headers = apache_request_headers();
+
+    foreach ($headers as $key => $value) {
+      if (strcasecmp((string) $key, 'Authorization') === 0 && trim((string) $value) !== '') {
+        return trim((string) $value);
+      }
+    }
+  }
+
+  return '';
 }
 
 function accepted_image_types(): array {
@@ -197,7 +219,7 @@ function public_base_url(): string {
     return rtrim($configuredUrl, '/');
   }
 
-  return 'https://felipecorretor.com.br';
+  return 'https://johnandradecorretor.com.br';
 }
 
 function relative_upload_path(string $propertyId, string $fileName): string {
@@ -283,15 +305,7 @@ function apply_property_image_watermark(string $imagePath, string $extension): a
 
 function resolve_watermark_logo_path(): ?string {
   $candidates = [
-    __DIR__ . '/../logo-share.png',
-    __DIR__ . '/../og-logo.png',
-    __DIR__ . '/../assets/logo-felipe.png',
-    __DIR__ . '/../../public/logo-share.png',
-    __DIR__ . '/../../public/og-logo.png',
-    __DIR__ . '/../../src/assets/logo-felipe.png',
-    __DIR__ . '/../../admin/src/assets/logo-branca.png',
-    __DIR__ . '/../../../public/public/logo-share.png',
-    __DIR__ . '/../../../public/src/assets/logo-felipe.png',
+    __DIR__ . '/../../admin/src/assets/brand/john-logo-light.png',
   ];
 
   foreach ($candidates as $candidate) {

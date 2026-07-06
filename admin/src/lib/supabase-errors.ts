@@ -58,6 +58,12 @@ export function propertySaveErrorMessage(
     return "Já existe um registro com o mesmo slug ou código. Ajuste o cadastro e tente novamente.";
   }
 
+  if (combinedMessage.includes("unauthorized")) {
+    return "Sua sessão expirou ou não foi aceita pelo servidor de uploads. Faça login novamente.";
+  }
+
+  if (message) return message;
+
   return `Erro ao ${action} imóvel. Verifique os dados e tente novamente.`;
 }
 
